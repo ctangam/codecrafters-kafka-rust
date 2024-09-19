@@ -82,6 +82,7 @@ impl Into<Vec<u8>> for &ResponseBody {
 
 struct ApiVersion {
     error_code: i16,
+    length: i32,
     api_keys: Vec<ApiKey>,
     throttle_time_ms: i32,
 }
@@ -90,6 +91,7 @@ impl Into<Vec<u8>> for &ApiVersion {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
         buffer.extend_from_slice(&self.error_code.to_be_bytes());
+        buffer.extend_from_slice(&self.length.to_be_bytes());
         buffer.extend_from_slice(&self.api_keys.iter().map(|api_key| Into::<Vec<u8>>::into(api_key)).collect::<Vec<Vec<u8>>>().concat());
         buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
         buffer
@@ -138,6 +140,7 @@ fn main() {
                     },
                     body: ResponseBody::ApiVersion(ApiVersion {
                         error_code,
+                        length: 1,
                         api_keys: vec![ApiKey {
                             api_key: request.request_api_key,
                             min_version: 0,
