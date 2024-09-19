@@ -81,7 +81,7 @@ fn main() {
                 msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
                 buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
                 buffer.unsplit(msg);
-                println!("buffer: {:?}", buffer);
+                println!("buffer: {:?}", buffer.to_vec());
                 
                 stream.write(&buffer).unwrap();
             }
@@ -96,7 +96,7 @@ fn main() {
 fn it_works() {
     let response = Response {
         header: ResponseHeader {
-            correlation_id: 1085913553,
+            correlation_id: 1516848645,
         },
         body: ResponseBody {
         },
@@ -107,5 +107,5 @@ fn it_works() {
     msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
     buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
     buffer.unsplit(msg);
-    println!("buffer: {:?}", buffer);
+    println!("buffer: {:?}", buffer.to_vec());
 }
