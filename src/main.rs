@@ -37,10 +37,11 @@ fn main() {
                     },
                 };
                 let mut buffer = BytesMut::with_capacity(1024);
-                let mut length = buffer.split();
-                buffer.copy_from_slice(&response.header.correlation_id.to_be_bytes());
-                length.put_u32(buffer.len() as u32);
-                buffer.unsplit(length);
+                buffer.put_u32(0);
+                let mut msg = buffer.split_off(4);
+                msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
+                buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
+                buffer.unsplit(msg);
                 
                 stream.write(&buffer).unwrap();
             }
@@ -49,4 +50,22 @@ fn main() {
             }
         }
     }
+}
+
+#[test]
+fn it_works() {
+    let response = Response {
+        header: Header {
+            correlation_id: 7,
+        },
+        body: Body {
+        },
+    };
+    let mut buffer = BytesMut::with_capacity(1024);
+    buffer.put_u32(0);
+    let mut msg = buffer.split_off(4);
+    msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
+    buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
+    buffer.unsplit(msg);
+    println!("buffer: {:?}", buffer);
 }
