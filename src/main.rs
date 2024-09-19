@@ -75,12 +75,13 @@ fn main() {
                     body: ResponseBody {
                     },
                 };
-                let mut buffer = BytesMut::with_capacity(1024);
+                let mut buffer = BytesMut::new();
                 buffer.put_u32(0);
                 let mut msg = buffer.split_off(4);
                 msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
                 buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
                 buffer.unsplit(msg);
+                println!("buffer: {:?}", buffer);
                 
                 stream.write(&buffer).unwrap();
             }
@@ -100,7 +101,7 @@ fn it_works() {
         body: ResponseBody {
         },
     };
-    let mut buffer = BytesMut::with_capacity(1024);
+    let mut buffer = BytesMut::new();
     buffer.put_u32(0);
     let mut msg = buffer.split_off(4);
     msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
