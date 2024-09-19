@@ -126,7 +126,6 @@ fn main() {
                 let mut request = [0; 1024];
                 stream.read(&mut request).unwrap();
                 let length = u32::from_be_bytes(request[0..4].try_into().unwrap());
-                println!("length: {}", length);
                 let request: &RequestHeader = &request[4..].into();
                 println!("request: {:?}", request);
                 let error_code = match request.request_api_version {
