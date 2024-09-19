@@ -94,6 +94,7 @@ impl Into<Vec<u8>> for &ApiVersion {
         buffer.extend_from_slice(&self.length.to_be_bytes());
         buffer.extend_from_slice(&self.api_keys.iter().map(|api_key| Into::<Vec<u8>>::into(api_key)).collect::<Vec<Vec<u8>>>().concat());
         buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
+        buffer.put_u8(0);
         buffer
     }
 }
