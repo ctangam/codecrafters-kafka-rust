@@ -64,17 +64,54 @@ impl Into<Vec<u8>> for &ResponseHeader {
     }
 }
 
-struct ResponseBody {
-    error_code: i16,
+enum ResponseBody {
+    ApiVersion(ApiVersion),
 }
 
 impl Into<Vec<u8>> for &ResponseBody {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
-        buffer.extend_from_slice(&self.error_code.to_be_bytes());
+        match self {
+            ResponseBody::ApiVersion(api_version) => {
+                buffer.extend_from_slice(&Into::<Vec<u8>>::into(api_version)[..]);
+            }
+        }
         buffer
     }
 }
+
+struct ApiVersion {
+    error_code: i16,
+    api_keys: Vec<ApiKey>,
+    throttle_time_ms: i32,
+}
+
+impl Into<Vec<u8>> for &ApiVersion {
+    fn into(self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.error_code.to_be_bytes());
+        buffer.extend_from_slice(&self.api_keys.iter().map(|api_key| Into::<Vec<u8>>::into(api_key)).collect::<Vec<Vec<u8>>>().concat());
+        buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
+        buffer
+    }
+}
+
+struct ApiKey {
+    api_key: i16,
+    min_version: i16,
+    max_version: i16,
+}
+
+impl Into<Vec<u8>> for &ApiKey {
+    fn into(self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.api_key.to_be_bytes());
+        buffer.extend_from_slice(&self.min_version.to_be_bytes());
+        buffer.extend_from_slice(&self.max_version.to_be_bytes());
+        buffer
+    }
+}
+
 
 
 fn main() {
@@ -100,9 +137,15 @@ fn main() {
                     header: ResponseHeader {
                         correlation_id: request.correlation_id,
                     },
-                    body: ResponseBody {
+                    body: ResponseBody::ApiVersion(ApiVersion {
                         error_code,
-                    },
+                        api_keys: vec![ApiKey {
+                            api_key: request.request_api_key,
+                            min_version: 0,
+                            max_version: 4,
+                        }],
+                        throttle_time_ms: 0,
+                    }),
                 };
                 let mut buffer = BytesMut::new();
                 buffer.put_u32(0);
@@ -119,23 +162,4 @@ fn main() {
             }
         }
     }
-}
-
-#[test]
-fn it_works() {
-    let response = Response {
-        header: ResponseHeader {
-            correlation_id: 1516848645,
-        },
-        body: ResponseBody {
-            error_code: 35,
-        },
-    };
-    let mut buffer = BytesMut::new();
-    buffer.put_u32(0);
-    let mut msg = buffer.split_off(4);
-    msg.extend_from_slice(&Into::<Vec<u8>>::into(&response)[..]);
-    buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
-    buffer.unsplit(msg);
-    println!("buffer: {:?}", buffer.to_vec());
 }
