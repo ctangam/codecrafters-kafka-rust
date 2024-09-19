@@ -110,6 +110,7 @@ impl Into<Vec<u8>> for &ApiKey {
         buffer.extend_from_slice(&self.api_key.to_be_bytes());
         buffer.extend_from_slice(&self.min_version.to_be_bytes());
         buffer.extend_from_slice(&self.max_version.to_be_bytes());
+        buffer.put_u8(0);
         buffer
     }
 }
