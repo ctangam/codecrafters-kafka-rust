@@ -8,6 +8,7 @@ struct Request {
     body: RequestBody,
 }
 
+#[derive(Debug)]
 struct RequestHeader {
     request_api_key: i16,
     request_api_version: i16,
@@ -63,7 +64,10 @@ fn main() {
                 let mut request = Vec::new();
                 stream.read_to_end(&mut request).unwrap();
                 println!("request: {:?}", request);
+                let length = u32::from_be_bytes(request[0..4].try_into().unwrap());
+                println!("length: {}", length);
                 let request: &RequestHeader = &request[4..].into();
+                println!("request: {:?}", request);
                 let response = Response {
                     header: ResponseHeader {
                         correlation_id: request.correlation_id,
