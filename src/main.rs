@@ -36,7 +36,7 @@ fn main() {
                     body: Body {
                     },
                 };
-                let mut buffer = BytesMut::new();
+                let mut buffer = BytesMut::with_capacity(1024);
                 let mut length = buffer.split();
                 buffer.copy_from_slice(&response.header.correlation_id.to_be_bytes());
                 length.put_u32(buffer.len() as u32);
