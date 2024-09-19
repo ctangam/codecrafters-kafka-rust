@@ -82,7 +82,7 @@ impl Into<Vec<u8>> for &ResponseBody {
 
 struct ApiVersion {
     error_code: i16,
-    length: i32,
+    length: i8,
     api_keys: Vec<ApiKey>,
     throttle_time_ms: i32,
 }
@@ -140,7 +140,7 @@ fn main() {
                     },
                     body: ResponseBody::ApiVersion(ApiVersion {
                         error_code,
-                        length: 1,
+                        length: 2,
                         api_keys: vec![ApiKey {
                             api_key: request.request_api_key,
                             min_version: 0,
