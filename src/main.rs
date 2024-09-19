@@ -1,10 +1,9 @@
 #![allow(unused_imports)]
 use std::{io::Write, net::TcpListener};
 
-use bytes::BytesMut;
+use bytes::{BufMut, BytesMut};
 
 struct Request {
-    length: u32,
 }
 
 struct Response {
@@ -13,7 +12,6 @@ struct Response {
 }
 
 struct Header {
-    length: u32,
     correlation_id: i32,
 }
 
@@ -33,16 +31,17 @@ fn main() {
                 println!("accepted new connection");
                 let response = Response {
                     header: Header {
-                        length: 0,
                         correlation_id: 7,
                     },
                     body: Body {
                     },
                 };
                 let mut buffer = BytesMut::new();
-                buffer.copy_from_slice(&response.header.length.to_be_bytes());
+                let mut length = buffer.split();
                 buffer.copy_from_slice(&response.header.correlation_id.to_be_bytes());
-        
+                length.put_u32(buffer.len() as u32);
+                buffer.unsplit(length);
+                
                 stream.write(&buffer).unwrap();
             }
             Err(e) => {
