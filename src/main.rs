@@ -96,7 +96,7 @@ fn main() {
 fn it_works() {
     let response = Response {
         header: ResponseHeader {
-            correlation_id: 7,
+            correlation_id: 1085913553,
         },
         body: ResponseBody {
         },
