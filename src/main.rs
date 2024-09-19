@@ -61,8 +61,8 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 println!("accepted new connection");
-                let mut request = Vec::new();
-                stream.read_to_end(&mut request).unwrap();
+                let mut request = [0; 1024];
+                stream.read(&mut request).unwrap();
                 println!("request: {:?}", request);
                 let length = u32::from_be_bytes(request[0..4].try_into().unwrap());
                 println!("length: {}", length);
