@@ -1,21 +1,52 @@
 #![allow(unused_imports)]
-use std::{io::Write, net::TcpListener};
+use std::{io::{Read, Write}, net::TcpListener};
 
-use bytes::{BufMut, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 struct Request {
+    header: RequestHeader,
+    body: RequestBody,
+}
+
+struct RequestHeader {
+    request_api_key: i16,
+    request_api_version: i16,
+    correlation_id: i32,
+    client_id: String,
+    _tagged_fields: Option<Vec<i32>>,
+}
+
+impl From<&[u8]> for RequestHeader {
+    fn from(buffer: &[u8]) -> Self {
+        let mut reader = buffer;
+        let request_api_key = reader.get_i16();
+        let request_api_version = reader.get_i16();
+        let correlation_id = reader.get_i32();
+        let client_id = String::from("");
+
+        Self {
+            request_api_key,
+            request_api_version,
+            correlation_id,
+            client_id,
+            _tagged_fields: None,
+        }
+    }
+}
+
+struct RequestBody {
 }
 
 struct Response {
-    header: Header,
-    body: Body,
+    header: ResponseHeader,
+    body: ResponseBody,
 }
 
-struct Header {
+struct ResponseHeader {
     correlation_id: i32,
 }
 
-struct Body {
+struct ResponseBody {
 
 }
 
@@ -29,11 +60,14 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 println!("accepted new connection");
+                let mut request = vec![0; 1024];
+                stream.read_to_end(&mut request).unwrap();
+                let request: &RequestHeader = &request[4..].into();
                 let response = Response {
-                    header: Header {
-                        correlation_id: 7,
+                    header: ResponseHeader {
+                        correlation_id: request.correlation_id,
                     },
-                    body: Body {
+                    body: ResponseBody {
                     },
                 };
                 let mut buffer = BytesMut::with_capacity(1024);
@@ -55,10 +89,10 @@ fn main() {
 #[test]
 fn it_works() {
     let response = Response {
-        header: Header {
+        header: ResponseHeader {
             correlation_id: 7,
         },
-        body: Body {
+        body: ResponseBody {
         },
     };
     let mut buffer = BytesMut::with_capacity(1024);
