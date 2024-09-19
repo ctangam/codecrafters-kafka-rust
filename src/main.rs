@@ -62,6 +62,7 @@ fn main() {
                 println!("accepted new connection");
                 let mut request = vec![0; 1024];
                 stream.read_to_end(&mut request).unwrap();
+                println!("request: {:?}", request);
                 let request: &RequestHeader = &request[4..].into();
                 let response = Response {
                     header: ResponseHeader {
