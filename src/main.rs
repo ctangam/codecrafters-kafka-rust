@@ -3,6 +3,7 @@ use std::{io::{Read, Write}, net::TcpListener};
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 
+#[derive(Debug)]
 struct Request {
     header: RequestHeader,
     body: RequestBody,
@@ -35,6 +36,7 @@ impl From<&[u8]> for RequestHeader {
     }
 }
 
+#[derive(Debug)]
 struct RequestBody {
 }
 
@@ -127,24 +129,21 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 println!("accepted new connection");
-                let mut request = [0; 1024];
-                stream.read(&mut request).unwrap();
-                let length = u32::from_be_bytes(request[0..4].try_into().unwrap());
-                let request: &RequestHeader = &request[4..].into();
-                println!("request: {:?}", request);
-                let error_code = match request.request_api_version {
+                let request = fun_name(&mut stream);
+                println!("request: {:?}", &request);
+                let error_code = match request.header.request_api_version {
                     0..=4 => 0,
                     _ => 35,
                 };
                 let response = Response {
                     header: ResponseHeader {
-                        correlation_id: request.correlation_id,
+                        correlation_id: request.header.correlation_id,
                     },
                     body: ResponseBody::ApiVersion(ApiVersion {
                         error_code,
                         length: 2,
                         api_keys: vec![ApiKey {
-                            api_key: request.request_api_key,
+                            api_key: request.header.request_api_key,
                             min_version: 0,
                             max_version: 4,
                         }],
@@ -165,5 +164,17 @@ fn main() {
                 println!("error: {}", e);
             }
         }
+    }
+}
+
+fn fun_name(stream: &mut std::net::TcpStream) -> Request {
+    let mut buffer = [0; 1024];
+    stream.read(&mut buffer).unwrap();
+    let length = u32::from_be_bytes(buffer[0..4].try_into().unwrap());
+    let header: RequestHeader = buffer[4..].into();
+    let body = RequestBody {};
+    Request {
+        header,
+        body,
     }
 }
