@@ -43,12 +43,37 @@ struct Response {
     body: ResponseBody,
 }
 
+impl Into<Vec<u8>> for &Response {
+    fn into(self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&Into::<Vec<u8>>::into(&self.header)[..]);
+        buffer.extend_from_slice(&Into::<Vec<u8>>::into(&self.body)[..]);
+        buffer
+    }
+}
+
 struct ResponseHeader {
     correlation_id: i32,
 }
 
-struct ResponseBody {
+impl Into<Vec<u8>> for &ResponseHeader {
+    fn into(self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.correlation_id.to_be_bytes());
+        buffer
+    }
+}
 
+struct ResponseBody {
+    error_code: i16,
+}
+
+impl Into<Vec<u8>> for &ResponseBody {
+    fn into(self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.error_code.to_be_bytes());
+        buffer
+    }
 }
 
 
@@ -63,22 +88,26 @@ fn main() {
                 println!("accepted new connection");
                 let mut request = [0; 1024];
                 stream.read(&mut request).unwrap();
-                println!("request: {:?}", request);
                 let length = u32::from_be_bytes(request[0..4].try_into().unwrap());
                 println!("length: {}", length);
                 let request: &RequestHeader = &request[4..].into();
                 println!("request: {:?}", request);
+                let error_code = match request.request_api_version {
+                    0..=4 => 0,
+                    _ => 35,
+                };
                 let response = Response {
                     header: ResponseHeader {
                         correlation_id: request.correlation_id,
                     },
                     body: ResponseBody {
+                        error_code,
                     },
                 };
                 let mut buffer = BytesMut::new();
                 buffer.put_u32(0);
                 let mut msg = buffer.split_off(4);
-                msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
+                msg.extend_from_slice(&Into::<Vec<u8>>::into(&response)[..]);
                 buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
                 buffer.unsplit(msg);
                 println!("buffer: {:?}", buffer.to_vec());
@@ -99,12 +128,13 @@ fn it_works() {
             correlation_id: 1516848645,
         },
         body: ResponseBody {
+            error_code: 35,
         },
     };
     let mut buffer = BytesMut::new();
     buffer.put_u32(0);
     let mut msg = buffer.split_off(4);
-    msg.extend_from_slice(&response.header.correlation_id.to_be_bytes());
+    msg.extend_from_slice(&Into::<Vec<u8>>::into(&response)[..]);
     buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
     buffer.unsplit(msg);
     println!("buffer: {:?}", buffer.to_vec());
