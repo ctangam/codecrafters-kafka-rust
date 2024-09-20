@@ -2,132 +2,20 @@
 use std::io::{Read, Write};
 
 use anyhow::{Error, Result};
+use api_version::{ApiKey, ApiVersion};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use fetch::FetchResponse;
+use request::{Request, RequestBody, RequestHeader};
+use response::{Response, ResponseBody, ResponseHeader};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
 };
 
-#[derive(Debug)]
-struct Request {
-    header: RequestHeader,
-    body: RequestBody,
-}
-
-#[derive(Debug)]
-struct RequestHeader {
-    request_api_key: i16,
-    request_api_version: i16,
-    correlation_id: i32,
-    client_id: String,
-    _tagged_fields: Option<Vec<i32>>,
-}
-
-impl From<&[u8]> for RequestHeader {
-    fn from(buffer: &[u8]) -> Self {
-        let mut reader = buffer;
-        let request_api_key = reader.get_i16();
-        let request_api_version = reader.get_i16();
-        let correlation_id = reader.get_i32();
-        let client_id = String::from("");
-
-        Self {
-            request_api_key,
-            request_api_version,
-            correlation_id,
-            client_id,
-            _tagged_fields: None,
-        }
-    }
-}
-
-#[derive(Debug)]
-struct RequestBody {}
-
-struct Response {
-    header: ResponseHeader,
-    body: ResponseBody,
-}
-
-impl Into<Vec<u8>> for &Response {
-    fn into(self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-        buffer.extend_from_slice(&Into::<Vec<u8>>::into(&self.header)[..]);
-        buffer.extend_from_slice(&Into::<Vec<u8>>::into(&self.body)[..]);
-        buffer
-    }
-}
-
-struct ResponseHeader {
-    correlation_id: i32,
-}
-
-impl Into<Vec<u8>> for &ResponseHeader {
-    fn into(self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-        buffer.extend_from_slice(&self.correlation_id.to_be_bytes());
-        buffer
-    }
-}
-
-enum ResponseBody {
-    ApiVersion(ApiVersion),
-}
-
-impl Into<Vec<u8>> for &ResponseBody {
-    fn into(self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-        match self {
-            ResponseBody::ApiVersion(api_version) => {
-                buffer.extend_from_slice(&Into::<Vec<u8>>::into(api_version)[..]);
-            }
-        }
-        buffer
-    }
-}
-
-struct ApiVersion {
-    error_code: i16,
-    length: i8,
-    api_keys: Vec<ApiKey>,
-    throttle_time_ms: i32,
-}
-
-impl Into<Vec<u8>> for &ApiVersion {
-    fn into(self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-        buffer.extend_from_slice(&self.error_code.to_be_bytes());
-        buffer.extend_from_slice(&self.length.to_be_bytes());
-        buffer.extend_from_slice(
-            &self
-                .api_keys
-                .iter()
-                .map(|api_key| Into::<Vec<u8>>::into(api_key))
-                .collect::<Vec<Vec<u8>>>()
-                .concat(),
-        );
-        buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
-        buffer.put_u8(0);
-        buffer
-    }
-}
-
-struct ApiKey {
-    api_key: i16,
-    min_version: i16,
-    max_version: i16,
-}
-
-impl Into<Vec<u8>> for &ApiKey {
-    fn into(self) -> Vec<u8> {
-        let mut buffer = Vec::new();
-        buffer.extend_from_slice(&self.api_key.to_be_bytes());
-        buffer.extend_from_slice(&self.min_version.to_be_bytes());
-        buffer.extend_from_slice(&self.max_version.to_be_bytes());
-        buffer.put_u8(0);
-        buffer
-    }
-}
+mod request;
+mod response;
+mod api_version;
+mod fetch;
 
 #[tokio::main]
 async fn main() {
@@ -175,8 +63,7 @@ fn build_response(request: &Request) -> Response {
         },
         body: ResponseBody::ApiVersion(ApiVersion {
             error_code,
-            length: 3,
-            api_keys: vec![
+            api_keys: (3, vec![
                 ApiKey {
                     api_key: request.header.request_api_key,
                     min_version: 0,
@@ -187,7 +74,7 @@ fn build_response(request: &Request) -> Response {
                     min_version: 0,
                     max_version: 16,
                 },
-            ],
+            ]),
             throttle_time_ms: 0,
         }),
     };
@@ -200,7 +87,5 @@ async fn read_request(stream: &mut TcpStream) -> Request {
     let length = u32::from_be_bytes(buffer);
     let mut buffer = vec![0; length as usize];
     stream.read_exact(&mut buffer).await.unwrap();
-    let header: RequestHeader = buffer[..].into();
-    let body = RequestBody {};
-    Request { header, body }
+    buffer[..].into()
 }
