@@ -135,7 +135,9 @@ async fn main() {
 
     loop {
         let (stream, _) = listener.accept().await.unwrap();
-        tokio::spawn(async move { process(stream).await; });
+        tokio::spawn(async move {
+            process(stream).await;
+        });
     }
 }
 
@@ -173,12 +175,19 @@ fn build_response(request: &Request) -> Response {
         },
         body: ResponseBody::ApiVersion(ApiVersion {
             error_code,
-            length: 2,
-            api_keys: vec![ApiKey {
-                api_key: request.header.request_api_key,
-                min_version: 0,
-                max_version: 4,
-            }],
+            length: 3,
+            api_keys: vec![
+                ApiKey {
+                    api_key: request.header.request_api_key,
+                    min_version: 0,
+                    max_version: 4,
+                },
+                ApiKey {
+                    api_key: 1,
+                    min_version: 0,
+                    max_version: 16,
+                },
+            ],
             throttle_time_ms: 0,
         }),
     };
