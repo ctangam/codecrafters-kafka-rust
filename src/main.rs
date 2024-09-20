@@ -1,7 +1,8 @@
 #![allow(unused_imports)]
-use std::{io::{Read, Write}, net::TcpListener};
+use std::{io::{Read, Write}};
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}};
 
 #[derive(Debug)]
 struct Request {
@@ -119,24 +120,25 @@ impl Into<Vec<u8>> for &ApiKey {
 }
 
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("Logs from your program will appear here!");
 
-    let listener = TcpListener::bind("127.0.0.1:9092").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:9092").await.unwrap();
     
-    for stream in listener.incoming() {
+    loop {
+        let stream = listener.accept().await;
         match stream {
-            Ok(mut stream) => {
+            Ok((mut stream, _)) => {
                 println!("accepted new connection");
                 loop {
-                    let request = read_request(&mut stream);
+                    let request = read_request(&mut stream).await;
                     println!("request: {:?}", &request);
                     let response = build_response(&request);
                     let buffer = response_to_bytes(&response);
                     println!("buffer: {:?}", buffer.to_vec());
                     
-                    stream.write(&buffer).unwrap();
+                    stream.write(&buffer).await.unwrap();
                 }
             }
             Err(e) => {
@@ -179,12 +181,12 @@ fn build_response(request: &Request) -> Response {
     response
 }
 
-fn read_request(stream: &mut std::net::TcpStream) -> Request {
+async fn read_request(stream: &mut TcpStream) -> Request {
     let mut buffer = [0; 4];
-    stream.read_exact(&mut buffer).unwrap();
+    stream.read_exact(&mut buffer).await.unwrap();
     let length = u32::from_be_bytes(buffer);
     let mut buffer = vec![0; length as usize];
-    stream.read_exact(&mut buffer).unwrap();
+    stream.read_exact(&mut buffer).await.unwrap();
     let header: RequestHeader = buffer[..].into();
     let body = RequestBody {};
     Request {
