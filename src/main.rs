@@ -1,8 +1,12 @@
 #![allow(unused_imports)]
-use std::{io::{Read, Write}};
+use std::io::{Read, Write};
 
+use anyhow::{Error, Result};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, TcpStream},
+};
 
 #[derive(Debug)]
 struct Request {
@@ -38,8 +42,7 @@ impl From<&[u8]> for RequestHeader {
 }
 
 #[derive(Debug)]
-struct RequestBody {
-}
+struct RequestBody {}
 
 struct Response {
     header: ResponseHeader,
@@ -95,7 +98,14 @@ impl Into<Vec<u8>> for &ApiVersion {
         let mut buffer = Vec::new();
         buffer.extend_from_slice(&self.error_code.to_be_bytes());
         buffer.extend_from_slice(&self.length.to_be_bytes());
-        buffer.extend_from_slice(&self.api_keys.iter().map(|api_key| Into::<Vec<u8>>::into(api_key)).collect::<Vec<Vec<u8>>>().concat());
+        buffer.extend_from_slice(
+            &self
+                .api_keys
+                .iter()
+                .map(|api_key| Into::<Vec<u8>>::into(api_key))
+                .collect::<Vec<Vec<u8>>>()
+                .concat(),
+        );
         buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
         buffer.put_u8(0);
         buffer
@@ -119,32 +129,26 @@ impl Into<Vec<u8>> for &ApiKey {
     }
 }
 
-
 #[tokio::main]
 async fn main() {
-    println!("Logs from your program will appear here!");
-
     let listener = TcpListener::bind("127.0.0.1:9092").await.unwrap();
-    
+
     loop {
-        let stream = listener.accept().await;
-        match stream {
-            Ok((mut stream, _)) => {
-                println!("accepted new connection");
-                loop {
-                    let request = read_request(&mut stream).await;
-                    println!("request: {:?}", &request);
-                    let response = build_response(&request);
-                    let buffer = response_to_bytes(&response);
-                    println!("buffer: {:?}", buffer.to_vec());
-                    
-                    stream.write(&buffer).await.unwrap();
-                }
-            }
-            Err(e) => {
-                println!("error: {}", e);
-            }
-        }
+        let (stream, _) = listener.accept().await.unwrap();
+        tokio::spawn(async move { process(stream).await; });
+    }
+}
+
+async fn process(mut stream: TcpStream) {
+    println!("accepted new connection");
+    loop {
+        let request = read_request(&mut stream).await;
+        println!("request: {:?}", &request);
+        let response = build_response(&request);
+        let buffer = response_to_bytes(&response);
+        println!("buffer: {:?}", buffer.to_vec());
+
+        stream.write(&buffer).await.unwrap();
     }
 }
 
@@ -189,8 +193,5 @@ async fn read_request(stream: &mut TcpStream) -> Request {
     stream.read_exact(&mut buffer).await.unwrap();
     let header: RequestHeader = buffer[..].into();
     let body = RequestBody {};
-    Request {
-        header,
-        body,
-    }
+    Request { header, body }
 }
