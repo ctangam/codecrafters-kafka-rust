@@ -129,36 +129,15 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 println!("accepted new connection");
-                let request = fun_name(&mut stream);
-                println!("request: {:?}", &request);
-                let error_code = match request.header.request_api_version {
-                    0..=4 => 0,
-                    _ => 35,
-                };
-                let response = Response {
-                    header: ResponseHeader {
-                        correlation_id: request.header.correlation_id,
-                    },
-                    body: ResponseBody::ApiVersion(ApiVersion {
-                        error_code,
-                        length: 2,
-                        api_keys: vec![ApiKey {
-                            api_key: request.header.request_api_key,
-                            min_version: 0,
-                            max_version: 4,
-                        }],
-                        throttle_time_ms: 0,
-                    }),
-                };
-                let mut buffer = BytesMut::new();
-                buffer.put_u32(0);
-                let mut msg = buffer.split_off(4);
-                msg.extend_from_slice(&Into::<Vec<u8>>::into(&response)[..]);
-                buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
-                buffer.unsplit(msg);
-                println!("buffer: {:?}", buffer.to_vec());
-                
-                stream.write(&buffer).unwrap();
+                loop {
+                    let request = read_request(&mut stream);
+                    println!("request: {:?}", &request);
+                    let response = build_response(&request);
+                    let buffer = response_to_bytes(&response);
+                    println!("buffer: {:?}", buffer.to_vec());
+                    
+                    stream.write(&buffer).unwrap();
+                }
             }
             Err(e) => {
                 println!("error: {}", e);
@@ -167,11 +146,46 @@ fn main() {
     }
 }
 
-fn fun_name(stream: &mut std::net::TcpStream) -> Request {
-    let mut buffer = [0; 1024];
-    stream.read(&mut buffer).unwrap();
-    let length = u32::from_be_bytes(buffer[0..4].try_into().unwrap());
-    let header: RequestHeader = buffer[4..].into();
+fn response_to_bytes(response: &Response) -> BytesMut {
+    let mut buffer = BytesMut::new();
+    buffer.put_u32(0);
+    let mut msg = buffer.split_off(4);
+    msg.extend_from_slice(&Into::<Vec<u8>>::into(response)[..]);
+    buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
+    buffer.unsplit(msg);
+    buffer
+}
+
+fn build_response(request: &Request) -> Response {
+    let error_code = match request.header.request_api_version {
+        0..=4 => 0,
+        _ => 35,
+    };
+    let response = Response {
+        header: ResponseHeader {
+            correlation_id: request.header.correlation_id,
+        },
+        body: ResponseBody::ApiVersion(ApiVersion {
+            error_code,
+            length: 2,
+            api_keys: vec![ApiKey {
+                api_key: request.header.request_api_key,
+                min_version: 0,
+                max_version: 4,
+            }],
+            throttle_time_ms: 0,
+        }),
+    };
+    response
+}
+
+fn read_request(stream: &mut std::net::TcpStream) -> Request {
+    let mut buffer = [0; 4];
+    stream.read_exact(&mut buffer).unwrap();
+    let length = u32::from_be_bytes(buffer);
+    let mut buffer = vec![0; length as usize];
+    stream.read_exact(&mut buffer).unwrap();
+    let header: RequestHeader = buffer[..].into();
     let body = RequestBody {};
     Request {
         header,
