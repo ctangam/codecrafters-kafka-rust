@@ -42,6 +42,7 @@ impl From<&[u8]> for RequestHeader {
         let request_api_key = buffer.get_i16();
         let request_api_version = buffer.get_i16();
         let correlation_id = buffer.get_i32();
+        buffer.get_i16();
         let client_id = String::from("");
 
         Self {

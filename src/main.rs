@@ -5,6 +5,8 @@ use anyhow::{Error, Result};
 use api_version::{ApiKey, ApiVersion};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use fetch::FetchResponse;
+use pretty_hex::PrettyHex;
+use pretty_hex::pretty_hex;
 use request::{Request, RequestBody, RequestHeader};
 use response::{Response, ResponseBody, ResponseHeader};
 use tokio::{
@@ -78,6 +80,6 @@ async fn read_request(stream: &mut TcpStream) -> Request {
     let length = u32::from_be_bytes(buffer);
     let mut buffer = vec![0; length as usize];
     stream.read_exact(&mut buffer).await.unwrap();
-    println!("buffer: {:?}", buffer);
+    println!("{:?}", buffer.hex_dump());
     buffer[..].into()
 }
