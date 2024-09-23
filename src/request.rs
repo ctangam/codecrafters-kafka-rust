@@ -1,8 +1,8 @@
 use std::io::{Read, Write};
 
-use bytes::Buf;
+use bytes::{Buf, Bytes};
 
-use crate::fetch::FetchRequest;
+use crate::{deserialize::Deserialize, fetch::FetchRequest};
 
 #[derive(Debug)]
 pub struct Request {
@@ -10,12 +10,15 @@ pub struct Request {
     pub(crate) body: RequestBody,
 }
 
-impl From<&[u8]> for Request {
-    fn from(mut buffer: &[u8]) -> Self {
-        let header = RequestHeader::from(buffer);
+
+
+impl<T: Buf> Deserialize<T> for Request {
+    fn from_bytes(buffer: &mut T) -> Self {
+        let header = RequestHeader::from_bytes(buffer);
+        buffer.advance(1);
         match header.request_api_key {
             1 => {
-                let body = RequestBody::Fetch(FetchRequest::from(buffer));
+                let body = RequestBody::Fetch(FetchRequest::from_bytes(buffer));
                 Self { header, body }
             }
             18 => {
@@ -24,9 +27,10 @@ impl From<&[u8]> for Request {
             }
             _ => todo!(),
         }
-
     }
 }
+
+
 
 #[derive(Debug)]
 pub struct RequestHeader {
@@ -37,8 +41,8 @@ pub struct RequestHeader {
     _tagged_fields: Option<Vec<i32>>,
 }
 
-impl From<&[u8]> for RequestHeader {
-    fn from(mut buffer: &[u8]) -> Self {
+impl<T: Buf> Deserialize<T> for RequestHeader {
+    fn from_bytes(buffer: &mut T) -> Self {
         let request_api_key = buffer.get_i16();
         let request_api_version = buffer.get_i16();
         let correlation_id = buffer.get_i32();
@@ -46,7 +50,7 @@ impl From<&[u8]> for RequestHeader {
         let client_id = String::from("");
         // buffer.get_u8();
 
-        Self {
+        RequestHeader {
             request_api_key,
             request_api_version,
             correlation_id,

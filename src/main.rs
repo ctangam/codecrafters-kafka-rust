@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use anyhow::{Error, Result};
 use api_version::{ApiKey, ApiVersion};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use deserialize::Deserialize;
 use fetch::FetchResponse;
 use pretty_hex::PrettyHex;
 use pretty_hex::pretty_hex;
@@ -18,6 +19,7 @@ mod request;
 mod response;
 mod api_version;
 mod fetch;
+mod deserialize;
 
 #[tokio::main]
 async fn main() {
@@ -92,5 +94,6 @@ async fn read_request(stream: &mut TcpStream) -> Request {
     let mut buffer = vec![0; length as usize];
     stream.read_exact(&mut buffer).await.unwrap();
     println!("{:?}", buffer.hex_dump());
-    buffer[..].into()
+
+    Request::from_bytes(&mut &buffer[..])
 }

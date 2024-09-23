@@ -1,4 +1,8 @@
-use bytes::{Buf, BufMut};
+use std::borrow::BorrowMut;
+
+use bytes::{Buf, BufMut, Bytes};
+
+use crate::deserialize::Deserialize;
 
 /*
 Fetch Response (Version: 16) => throttle_time_ms error_code session_id [responses] TAG_BUFFER 
@@ -32,8 +36,8 @@ pub struct FetchRequest {
     pub rack_id: (u8, String),
 }
 
-impl From<&[u8]> for FetchRequest {
-    fn from(mut buffer: &[u8]) -> Self {
+impl<T: Buf> Deserialize<T> for FetchRequest {
+    fn from_bytes(buffer: &mut T) -> Self {
         let max_wait_ms = buffer.get_i32();
         let min_bytes = buffer.get_i32();
         let max_bytes = buffer.get_i32();
@@ -42,19 +46,19 @@ impl From<&[u8]> for FetchRequest {
         let session_epoch = buffer.get_i32();
         let mut topics = (buffer.get_u8(), Vec::new());
         for _ in 0..topics.0 {
-            let topic = Topic::from(buffer);
+            let topic = Topic::from_bytes(buffer);
             topics.1.push(topic);
         }
 
         let mut forgotten_topics_data = (buffer.get_u8(), Vec::new());
         for _ in 0..forgotten_topics_data.0 {
-            let data = ForgottenTopicsData::from(buffer);
+            let data = ForgottenTopicsData::from_bytes(buffer);
             forgotten_topics_data.1.push(data);
         }
 
         let mut rack_id = (buffer.get_u8(), String::from(""));
 
-        rack_id.1 = String::from_utf8_lossy(buffer.take(rack_id.0 as usize).into_inner()).to_string();
+        rack_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize)).to_string();
         
         buffer.get_u8();
 
@@ -78,13 +82,13 @@ pub struct Topic {
     partitions: (u8, Vec<PartitionReq>),
 }
 
-impl From<&[u8]> for Topic {
-    fn from(mut buffer: &[u8]) -> Self {
+impl<T: Buf> Deserialize<T> for Topic {
+    fn from_bytes(buffer: &mut T) -> Self {
         let topic_id = buffer.get_u128();
         let mut partitions = (buffer.get_u8(), Vec::new());
 
         for _ in 0..partitions.0 {
-            let partition = PartitionReq::from(buffer);
+            let partition = PartitionReq::from_bytes(buffer);
             partitions.1.push(partition);
         }
         buffer.get_u8();
@@ -106,8 +110,8 @@ pub struct PartitionReq {
     partition_max_bytes: i32,
 }
 
-impl From<&[u8]> for PartitionReq {
-    fn from(mut buffer: &[u8]) -> Self {
+impl<T: Buf> Deserialize<T> for PartitionReq {
+    fn from_bytes(buffer: &mut T) -> Self {
         let partition = buffer.get_i32();
         let current_leader_epoch = buffer.get_i32();
         let fetch_offset = buffer.get_i64();
@@ -135,8 +139,8 @@ pub struct ForgottenTopicsData {
     partitions: (u8, Vec<i32>),
 }
 
-impl From<&[u8]> for ForgottenTopicsData {
-    fn from(mut buffer: &[u8]) -> Self {
+impl<T: Buf> Deserialize<T> for ForgottenTopicsData {
+    fn from_bytes(mut buffer: &mut T) -> Self {
         let topic_id = buffer.get_u128();
         let mut partitions = (buffer.get_u8(), Vec::new());
 
