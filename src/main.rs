@@ -49,6 +49,7 @@ fn response_to_bytes(response: &Response) -> BytesMut {
     buffer.put_u32(0);
     let mut msg = buffer.split_off(4);
     msg.extend_from_slice(&Into::<Vec<u8>>::into(response)[..]);
+    println!("length: {}", msg.len());
     buffer.copy_from_slice(&(msg.len() as u32).to_be_bytes());
     buffer.unsplit(msg);
     buffer
