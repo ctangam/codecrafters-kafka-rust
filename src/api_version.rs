@@ -6,6 +6,30 @@ pub struct ApiVersion {
     pub(crate) throttle_time_ms: i32,
 }
 
+impl ApiVersion {
+    pub fn new(error_code: i16) -> Self {
+        Self {
+            error_code,
+            api_keys: (
+                3,
+                vec![
+                    ApiKey {
+                        api_key: 18,
+                        min_version: 0,
+                        max_version: 4,
+                    },
+                    ApiKey {
+                        api_key: 1,
+                        min_version: 0,
+                        max_version: 16,
+                    },
+                ],
+            ),
+            throttle_time_ms: 0,
+        }
+    }
+}
+
 impl Into<Vec<u8>> for &ApiVersion {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
@@ -13,7 +37,8 @@ impl Into<Vec<u8>> for &ApiVersion {
         buffer.extend_from_slice(&self.api_keys.0.to_be_bytes());
         buffer.extend_from_slice(
             &self
-                .api_keys.1
+                .api_keys
+                .1
                 .iter()
                 .map(|api_key| Into::<Vec<u8>>::into(api_key))
                 .collect::<Vec<Vec<u8>>>()

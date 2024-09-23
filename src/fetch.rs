@@ -179,6 +179,17 @@ pub struct FetchResponse {
     responses: (i32, Vec<Response>),
 }
 
+impl FetchResponse {
+    pub fn new(error_code: i16, session_id: i32) -> Self {
+        Self {
+            throttle_time_ms: 0,
+            error_code,
+            session_id,
+            responses: (0, Vec::new()),
+        }
+    }
+}
+
 impl From<&[u8]> for FetchResponse {
     fn from(mut buffer: &[u8]) -> Self {
         let throttle_time_ms = buffer.get_i32();
@@ -242,6 +253,24 @@ impl From<&[u8]> for Response {
             topic_id,
             partitions,
         }
+    }
+}
+
+impl Into<Vec<u8>> for &Response {
+    fn into(self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.topic_id.to_be_bytes());
+        buffer.extend_from_slice(
+            &self
+                .partitions
+                .1
+                .iter()
+                .map(|partition| Into::<Vec<u8>>::into(partition))
+                .collect::<Vec<Vec<u8>>>()
+                .concat(),
+        );
+        buffer.put_u8(0);
+        buffer
     }
 }
 

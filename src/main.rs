@@ -57,26 +57,17 @@ fn build_response(request: &Request) -> Response {
         0..=4 => 0,
         _ => 35,
     };
+    let body = match request.header.request_api_key {
+        1 => ResponseBody::Fetch(FetchResponse::new(error_code, 0)),
+        18 => ResponseBody::ApiVersion(ApiVersion::new(error_code)),
+
+        _ => unimplemented!()
+    };
     let response = Response {
         header: ResponseHeader {
             correlation_id: request.header.correlation_id,
         },
-        body: ResponseBody::ApiVersion(ApiVersion {
-            error_code,
-            api_keys: (3, vec![
-                ApiKey {
-                    api_key: request.header.request_api_key,
-                    min_version: 0,
-                    max_version: 4,
-                },
-                ApiKey {
-                    api_key: 1,
-                    min_version: 0,
-                    max_version: 16,
-                },
-            ]),
-            throttle_time_ms: 0,
-        }),
+        body,
     };
     response
 }
