@@ -45,8 +45,8 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         let min_bytes = buffer.get_i32();
         let max_bytes = buffer.get_i32();
         let isolation_level = buffer.get_i8();
-        let session_id = buffer.get_i32();
-        let session_epoch = buffer.get_i32();
+        let session_id = 0;
+        let session_epoch = 0;
         let mut topics = (buffer.get_u8(), Vec::new());
         for _ in 0..topics.0 {
             let topic = Topic::from_bytes(buffer);
