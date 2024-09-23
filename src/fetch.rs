@@ -221,6 +221,7 @@ impl Into<Vec<u8>> for &FetchResponse {
         buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
         buffer.extend_from_slice(&self.error_code.to_be_bytes());
         buffer.extend_from_slice(&self.session_id.to_be_bytes());
+        buffer.put_i32(self.responses.0);
         buffer.extend_from_slice(
             &self
                 .responses
