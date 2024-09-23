@@ -26,7 +26,6 @@ impl Into<Vec<u8>> for &ResponseHeader {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
         buffer.extend_from_slice(&self.correlation_id.to_be_bytes());
-        buffer.put_u8(0);
         buffer
     }
 }
@@ -45,6 +44,7 @@ impl Into<Vec<u8>> for &ResponseBody {
                 buffer.extend_from_slice(&Into::<Vec<u8>>::into(api_version)[..]);
             }
             ResponseBody::Fetch(fetch_response) => {
+                buffer.put_u8(0);
                 buffer.extend_from_slice(&Into::<Vec<u8>>::into(fetch_response)[..]);
             }
         }
