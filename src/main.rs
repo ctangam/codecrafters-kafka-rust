@@ -78,5 +78,6 @@ async fn read_request(stream: &mut TcpStream) -> Request {
     let length = u32::from_be_bytes(buffer);
     let mut buffer = vec![0; length as usize];
     stream.read_exact(&mut buffer).await.unwrap();
+    println!("buffer: {:?}", buffer);
     buffer[..].into()
 }
