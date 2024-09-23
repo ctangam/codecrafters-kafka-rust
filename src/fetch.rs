@@ -54,7 +54,7 @@ impl From<&[u8]> for FetchRequest {
 
         let mut rack_id = (buffer.get_u8(), String::from(""));
 
-        rack_id.1 = String::from_utf8(buffer.take(rack_id.0 as usize).into_inner().to_vec()).unwrap();
+        rack_id.1 = String::from_utf8_lossy(buffer.take(rack_id.0 as usize).into_inner()).to_string();
         
         buffer.get_u8();
 
