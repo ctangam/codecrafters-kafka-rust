@@ -231,6 +231,7 @@ impl Into<Vec<u8>> for &FetchResponse {
                 .collect::<Vec<Vec<u8>>>()
                 .concat(),
         );
+        buffer.put_u8(0);
         buffer
     }
 }
