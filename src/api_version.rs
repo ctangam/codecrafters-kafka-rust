@@ -3,7 +3,7 @@ use bytes::BufMut;
 #[derive(Debug)]
 pub struct ApiVersion {
     pub(crate) error_code: i16,
-    pub(crate) api_keys: (u32, Vec<ApiKey>),
+    pub(crate) api_keys: (u8, Vec<ApiKey>),
     pub(crate) throttle_time_ms: i32,
 }
 
@@ -45,6 +45,7 @@ impl Into<Vec<u8>> for &ApiVersion {
                 .collect::<Vec<Vec<u8>>>()
                 .concat(),
         );
+        buffer.put_u8(0);
         buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
         buffer.put_u8(0);
         buffer
@@ -64,7 +65,6 @@ impl Into<Vec<u8>> for &ApiKey {
         buffer.extend_from_slice(&self.api_key.to_be_bytes());
         buffer.extend_from_slice(&self.min_version.to_be_bytes());
         buffer.extend_from_slice(&self.max_version.to_be_bytes());
-        buffer.put_u8(0);
         buffer
     }
 }
