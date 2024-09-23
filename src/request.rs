@@ -15,7 +15,7 @@ impl From<&[u8]> for Request {
         let header = RequestHeader::from(buffer);
         match header.request_api_key {
             1 => {
-                let body = RequestBody::Fetch(FetchRequest::from(buffer));
+                let body = RequestBody::Fetch();
                 Self { header, body }
             }
             18 => {
@@ -58,5 +58,5 @@ impl From<&[u8]> for RequestHeader {
 #[derive(Debug)]
 pub enum RequestBody {
     ApiVersion,
-    Fetch(FetchRequest)
+    Fetch()
 }
