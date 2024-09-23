@@ -195,31 +195,7 @@ impl FetchResponse {
             throttle_time_ms: 0,
             error_code,
             session_id: request.session_id,
-            responses: (request.topics.0, responses),
-        }
-    }
-}
-
-impl From<&[u8]> for FetchResponse {
-    fn from(mut buffer: &[u8]) -> Self {
-        let throttle_time_ms = buffer.get_i32();
-        let error_code = buffer.get_i16();
-        let session_id = buffer.get_i32();
-
-        let mut responses = (buffer.get_u8(), Vec::new());
-
-        for _ in 0..responses.0 {
-            let response = Response::from(buffer);
-            responses.1.push(response);
-        }
-
-        buffer.get_u8();
-
-        Self {
-            throttle_time_ms,
-            error_code,
-            session_id,
-            responses,
+            responses: (request.topics.0 + 1, responses),
         }
     }
 }
@@ -260,24 +236,6 @@ impl Response {
     }
 }
 
-impl From<&[u8]> for Response {
-    fn from(mut buffer: &[u8]) -> Self {
-        let topic_id = buffer.get_u128();
-        let mut partitions = (buffer.get_u8(), Vec::new());
-
-        for _ in 0..partitions.0 {
-            let partition = PartitionResp::from(buffer);
-            partitions.1.push(partition);
-        }
-        buffer.get_u8();
-
-        Self {
-            topic_id,
-            partitions,
-        }
-    }
-}
-
 impl Into<Vec<u8>> for &Response {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
@@ -308,39 +266,6 @@ struct PartitionResp {
     records: (u8, Vec<u8>),
 }
 
-impl From<&[u8]> for PartitionResp {
-    fn from(mut buffer: &[u8]) -> Self {
-        let partition_index = buffer.get_i32();
-        let error_code = buffer.get_i16();
-        let high_watermark = buffer.get_i64();
-        let last_stable_offset = buffer.get_i64();
-        let log_start_offset = buffer.get_i64();
-        let mut aborted_transactions = (buffer.get_u8(), Vec::new());
-        for _ in 0..aborted_transactions.0 {
-            let aborted_transaction = AbortedTransaction::from(buffer);
-            aborted_transactions.1.push(aborted_transaction);
-        }
-        let preferred_read_replica = buffer.get_i32();
-        let mut records = (buffer.get_u8(), Vec::new());
-        for _ in 0..records.0 {
-            let record = buffer.get_u8();
-            records.1.push(record);
-        }
-        buffer.get_u8();
-        
-        Self {
-            partition_index,
-            error_code,
-            high_watermark,
-            last_stable_offset,
-            log_start_offset,
-            aborted_transactions,
-            preferred_read_replica,
-            records,
-        }
-    }
-}
-
 impl Into<Vec<u8>> for &PartitionResp {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
@@ -368,19 +293,6 @@ impl Into<Vec<u8>> for &PartitionResp {
 struct AbortedTransaction {
     producer_id: i64,
     first_offset: i64,
-}
-
-impl From<&[u8]> for AbortedTransaction {
-    fn from(mut buffer: &[u8]) -> Self {
-        let producer_id = buffer.get_i64();
-        let first_offset = buffer.get_i64();
-        buffer.get_u8();
-
-        Self {
-            producer_id,
-            first_offset,
-        }
-    }
 }
 
 impl Into<Vec<u8>> for &AbortedTransaction {
