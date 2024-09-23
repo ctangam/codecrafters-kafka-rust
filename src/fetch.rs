@@ -48,6 +48,7 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         let session_id = 0;
         let session_epoch = 0;
         let mut topics = (buffer.get_u8(), Vec::new());
+        println!("topics: {}", topics.0);
         for _ in 0..topics.0 {
             let topic = Topic::from_bytes(buffer);
             topics.1.push(topic);
