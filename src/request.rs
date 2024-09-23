@@ -10,12 +10,9 @@ pub struct Request {
     pub(crate) body: RequestBody,
 }
 
-
-
 impl<T: Buf> Deserialize<T> for Request {
     fn from_bytes(buffer: &mut T) -> Self {
         let header = RequestHeader::from_bytes(buffer);
-        buffer.advance(1);
         match header.request_api_key {
             1 => {
                 let body = RequestBody::Fetch(FetchRequest::from_bytes(buffer));
