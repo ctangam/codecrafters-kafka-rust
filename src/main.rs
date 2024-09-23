@@ -57,15 +57,23 @@ fn response_to_bytes(response: &Response) -> BytesMut {
 }
 
 fn build_response(request: &Request) -> Response {
-    let error_code = match request.header.request_api_version {
-        0..=4 if request.header.request_api_key == 18 => 0,
-        0..=16 if request.header.request_api_key == 1 => 0,
-        _ => 35,
-    };
-    let body = match request.header.request_api_key {
-        1 => ResponseBody::Fetch(FetchResponse::new(error_code, 0)),
-        18 => ResponseBody::ApiVersion(ApiVersion::new(error_code)),
 
+    let body = match request.body {
+        RequestBody::Fetch(ref fetch) => {
+            let error_code = match request.header.request_api_version {
+                0..=16 if fetch.topics.0 > 0 => 100,
+                0..=16 => 0,
+                _ => 35,
+            };
+            ResponseBody::Fetch(FetchResponse::new(error_code, 0))
+        },
+        RequestBody::ApiVersion => {
+            let error_code = match request.header.request_api_version {
+                0..=4 => 0,
+                _ => 35,
+            };
+            ResponseBody::ApiVersion(ApiVersion::new(error_code))
+        },
         _ => unimplemented!()
     };
     let response = Response {
