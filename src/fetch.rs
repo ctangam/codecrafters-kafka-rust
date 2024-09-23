@@ -27,9 +27,9 @@ pub struct FetchRequest {
     isolation_level: i8,
     session_id: i32,
     session_epoch: i32,
-    topics: (i32, Vec<Topic>),
-    forgotten_topics_data: (i32, Vec<ForgottenTopicsData>),
-    rack_id: (i32, String),
+    topics: (i8, Vec<Topic>),
+    forgotten_topics_data: (i8, Vec<ForgottenTopicsData>),
+    rack_id: (i8, String),
 }
 
 impl From<&[u8]> for FetchRequest {
@@ -40,19 +40,19 @@ impl From<&[u8]> for FetchRequest {
         let isolation_level = buffer.get_i8();
         let session_id = buffer.get_i32();
         let session_epoch = buffer.get_i32();
-        let mut topics = (buffer.get_i32(), Vec::new());
+        let mut topics = (buffer.get_i8(), Vec::new());
         for _ in 0..topics.0 {
             let topic = Topic::from(buffer);
             topics.1.push(topic);
         }
 
-        let mut forgotten_topics_data = (buffer.get_i32(), Vec::new());
+        let mut forgotten_topics_data = (buffer.get_i8(), Vec::new());
         for _ in 0..forgotten_topics_data.0 {
             let data = ForgottenTopicsData::from(buffer);
             forgotten_topics_data.1.push(data);
         }
 
-        let mut rack_id = (buffer.get_i32(), String::from(""));
+        let mut rack_id = (buffer.get_i8(), String::from(""));
 
         rack_id.1 = String::from_utf8(buffer.take(rack_id.0 as usize).into_inner().to_vec()).unwrap();
         
@@ -75,13 +75,13 @@ impl From<&[u8]> for FetchRequest {
 #[derive(Debug)]
 pub struct Topic {
     topic_id: u128,
-    partitions: (i32, Vec<PartitionReq>),
+    partitions: (i8, Vec<PartitionReq>),
 }
 
 impl From<&[u8]> for Topic {
     fn from(mut buffer: &[u8]) -> Self {
         let topic_id = buffer.get_u128();
-        let mut partitions = (buffer.get_i32(), Vec::new());
+        let mut partitions = (buffer.get_i8(), Vec::new());
 
         for _ in 0..partitions.0 {
             let partition = PartitionReq::from(buffer);
@@ -132,13 +132,13 @@ impl From<&[u8]> for PartitionReq {
 #[derive(Debug)]
 pub struct ForgottenTopicsData {
     topic_id: u128,
-    partitions: (i32, Vec<i32>),
+    partitions: (i8, Vec<i32>),
 }
 
 impl From<&[u8]> for ForgottenTopicsData {
     fn from(mut buffer: &[u8]) -> Self {
         let topic_id = buffer.get_u128();
-        let mut partitions = (buffer.get_i32(), Vec::new());
+        let mut partitions = (buffer.get_i8(), Vec::new());
 
         for _ in 0..partitions.0 {
             let partition = buffer.get_i32();
@@ -177,7 +177,7 @@ pub struct FetchResponse {
     throttle_time_ms: i32,
     error_code: i16,
     session_id: i32,
-    responses: (i32, Vec<Response>),
+    responses: (i8, Vec<Response>),
 }
 
 impl FetchResponse {
@@ -197,7 +197,7 @@ impl From<&[u8]> for FetchResponse {
         let error_code = buffer.get_i16();
         let session_id = buffer.get_i32();
 
-        let mut responses = (buffer.get_i32(), Vec::new());
+        let mut responses = (buffer.get_i8(), Vec::new());
 
         for _ in 0..responses.0 {
             let response = Response::from(buffer);
@@ -221,7 +221,7 @@ impl Into<Vec<u8>> for &FetchResponse {
         buffer.extend_from_slice(&self.throttle_time_ms.to_be_bytes());
         buffer.extend_from_slice(&self.error_code.to_be_bytes());
         buffer.extend_from_slice(&self.session_id.to_be_bytes());
-        buffer.put_i32(self.responses.0);
+        buffer.put_i8(self.responses.0);
         buffer.extend_from_slice(
             &self
                 .responses
@@ -238,13 +238,13 @@ impl Into<Vec<u8>> for &FetchResponse {
 #[derive(Debug)]
 struct Response {
     topic_id: u128,
-    partitions: (i32, Vec<PartitionResp>),
+    partitions: (i8, Vec<PartitionResp>),
 }
 
 impl From<&[u8]> for Response {
     fn from(mut buffer: &[u8]) -> Self {
         let topic_id = buffer.get_u128();
-        let mut partitions = (buffer.get_i32(), Vec::new());
+        let mut partitions = (buffer.get_i8(), Vec::new());
 
         for _ in 0..partitions.0 {
             let partition = PartitionResp::from(buffer);
@@ -284,9 +284,9 @@ struct PartitionResp {
     high_watermark: i64,
     last_stable_offset: i64,
     log_start_offset: i64,
-    aborted_transactions: (i32, Vec<AbortedTransaction>),
+    aborted_transactions: (i8, Vec<AbortedTransaction>),
     preferred_read_replica: i32,
-    records: (i32, Vec<u8>),
+    records: (i8, Vec<u8>),
 }
 
 impl From<&[u8]> for PartitionResp {
@@ -296,13 +296,13 @@ impl From<&[u8]> for PartitionResp {
         let high_watermark = buffer.get_i64();
         let last_stable_offset = buffer.get_i64();
         let log_start_offset = buffer.get_i64();
-        let mut aborted_transactions = (buffer.get_i32(), Vec::new());
+        let mut aborted_transactions = (buffer.get_i8(), Vec::new());
         for _ in 0..aborted_transactions.0 {
             let aborted_transaction = AbortedTransaction::from(buffer);
             aborted_transactions.1.push(aborted_transaction);
         }
         let preferred_read_replica = buffer.get_i32();
-        let mut records = (buffer.get_i32(), Vec::new());
+        let mut records = (buffer.get_i8(), Vec::new());
         for _ in 0..records.0 {
             let record = buffer.get_u8();
             records.1.push(record);
