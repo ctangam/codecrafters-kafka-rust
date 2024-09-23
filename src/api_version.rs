@@ -1,5 +1,6 @@
 use bytes::BufMut;
 
+#[derive(Debug)]
 pub struct ApiVersion {
     pub(crate) error_code: i16,
     pub(crate) api_keys: (u32, Vec<ApiKey>),
@@ -50,6 +51,7 @@ impl Into<Vec<u8>> for &ApiVersion {
     }
 }
 
+#[derive(Debug)]
 pub struct ApiKey {
     pub api_key: i16,
     pub min_version: i16,

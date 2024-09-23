@@ -37,8 +37,9 @@ async fn process(mut stream: TcpStream) {
         let request = read_request(&mut stream).await;
         println!("request: {:?}", &request);
         let response = build_response(&request);
+        println!("response: {:?}", &response);
         let buffer = response_to_bytes(&response);
-        println!("buffer: {:?}", buffer.to_vec());
+        println!("{:?}", buffer.hex_dump());
 
         stream.write(&buffer).await.unwrap();
     }

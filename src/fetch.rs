@@ -172,6 +172,7 @@ Fetch Response (Version: 16) => throttle_time_ms error_code session_id [response
       preferred_read_replica => INT32
       records => COMPACT_RECORDS
 */
+#[derive(Debug)]
 pub struct FetchResponse {
     throttle_time_ms: i32,
     error_code: i16,
@@ -233,6 +234,7 @@ impl Into<Vec<u8>> for &FetchResponse {
     }
 }
 
+#[derive(Debug)]
 struct Response {
     topic_id: u128,
     partitions: (i32, Vec<PartitionResp>),
@@ -274,6 +276,7 @@ impl Into<Vec<u8>> for &Response {
     }
 }
 
+#[derive(Debug)]
 struct PartitionResp {
     partition_index: i32,
     error_code: i16,
@@ -341,6 +344,7 @@ impl Into<Vec<u8>> for &PartitionResp {
     }
 }
 
+#[derive(Debug)]
 struct AbortedTransaction {
     producer_id: i64,
     first_offset: i64,
