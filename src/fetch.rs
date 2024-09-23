@@ -5,23 +5,26 @@ use bytes::{Buf, BufMut, Bytes};
 use crate::deserialize::Deserialize;
 
 /*
-Fetch Response (Version: 16) => throttle_time_ms error_code session_id [responses] TAG_BUFFER 
-  throttle_time_ms => INT32
-  error_code => INT16
+Fetch Request (Version: 16) => max_wait_ms min_bytes max_bytes isolation_level session_id session_epoch [topics] [forgotten_topics_data] rack_id TAG_BUFFER 
+  max_wait_ms => INT32
+  min_bytes => INT32
+  max_bytes => INT32
+  isolation_level => INT8
   session_id => INT32
-  responses => topic_id [partitions] TAG_BUFFER 
+  session_epoch => INT32
+  topics => topic_id [partitions] TAG_BUFFER 
     topic_id => UUID
-    partitions => partition_index error_code high_watermark last_stable_offset log_start_offset [aborted_transactions] preferred_read_replica records TAG_BUFFER 
-      partition_index => INT32
-      error_code => INT16
-      high_watermark => INT64
-      last_stable_offset => INT64
+    partitions => partition current_leader_epoch fetch_offset last_fetched_epoch log_start_offset partition_max_bytes TAG_BUFFER 
+      partition => INT32
+      current_leader_epoch => INT32
+      fetch_offset => INT64
+      last_fetched_epoch => INT32
       log_start_offset => INT64
-      aborted_transactions => producer_id first_offset TAG_BUFFER 
-        producer_id => INT64
-        first_offset => INT64
-      preferred_read_replica => INT32
-      records => COMPACT_RECORDS
+      partition_max_bytes => INT32
+  forgotten_topics_data => topic_id [partitions] TAG_BUFFER 
+    topic_id => UUID
+    partitions => INT32
+  rack_id => COMPACT_STRING
 */
 #[derive(Debug)]
 pub struct FetchRequest {
@@ -185,12 +188,13 @@ pub struct FetchResponse {
 }
 
 impl FetchResponse {
-    pub fn new(error_code: i16, session_id: i32) -> Self {
+    pub fn new(error_code: i16, request: &FetchRequest) -> Self {
+        let responses = request.topics.1.iter().map(|topic| Response::new(topic.topic_id)).collect();
         Self {
             throttle_time_ms: 0,
             error_code,
-            session_id,
-            responses: (0, Vec::new()),
+            session_id: request.session_id,
+            responses: (request.topics.0, responses),
         }
     }
 }
@@ -244,6 +248,15 @@ impl Into<Vec<u8>> for &FetchResponse {
 struct Response {
     topic_id: u128,
     partitions: (u8, Vec<PartitionResp>),
+}
+
+impl Response {
+    fn new(topic_id: u128) -> Self {
+        Self {
+            topic_id,
+            partitions: (0, Vec::new()),
+        }
+    }
 }
 
 impl From<&[u8]> for Response {

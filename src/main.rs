@@ -67,7 +67,7 @@ fn build_response(request: &Request) -> Response {
                 0..=16 => 0,
                 _ => 35,
             };
-            ResponseBody::Fetch(FetchResponse::new(error_code, 0))
+            ResponseBody::Fetch(FetchResponse::new(error_code, fetch))
         },
         RequestBody::ApiVersion => {
             let error_code = match request.header.request_api_version {
