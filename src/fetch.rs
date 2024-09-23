@@ -45,8 +45,8 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         let min_bytes = buffer.get_i32();
         let max_bytes = buffer.get_i32();
         let isolation_level = buffer.get_i8();
-        let session_id = 0;
-        let session_epoch = 0;
+        // let session_id = buffer.get_i32();
+        // let session_epoch = buffer.get_i32();
         let mut topics = (buffer.get_u8(), Vec::new());
         println!("topics: {}", topics.0);
         for _ in 0..topics.0 {
@@ -54,28 +54,28 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
             topics.1.push(topic);
         }
 
-        let mut forgotten_topics_data = (buffer.get_u8(), Vec::new());
-        for _ in 0..forgotten_topics_data.0 {
-            let data = ForgottenTopicsData::from_bytes(buffer);
-            forgotten_topics_data.1.push(data);
-        }
+        // let mut forgotten_topics_data = (buffer.get_u8(), Vec::new());
+        // for _ in 0..forgotten_topics_data.0 {
+        //     let data = ForgottenTopicsData::from_bytes(buffer);
+        //     forgotten_topics_data.1.push(data);
+        // }
 
-        let mut rack_id = (buffer.get_u8(), String::from(""));
+        // let mut rack_id = (buffer.get_u8(), String::from(""));
 
-        rack_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize)).to_string();
+        // rack_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize)).to_string();
         
-        buffer.get_u8();
+        // buffer.get_u8();
 
         Self {
             max_wait_ms,
             min_bytes,
             max_bytes,
             isolation_level,
-            session_id,
-            session_epoch,
+            session_id: 0,
+            session_epoch: 0,
             topics,
-            forgotten_topics_data,
-            rack_id,
+            forgotten_topics_data: (0, Vec::new()),
+            rack_id: (0, String::from("")),
         }
     }
 }
@@ -90,7 +90,7 @@ impl<T: Buf> Deserialize<T> for Topic {
     fn from_bytes(buffer: &mut T) -> Self {
         let topic_id = buffer.get_u128();
         let mut partitions = (buffer.get_u8(), Vec::new());
-
+        println!("partitions: {}", partitions.0);
         for _ in 0..partitions.0 {
             let partition = PartitionReq::from_bytes(buffer);
             partitions.1.push(partition);
