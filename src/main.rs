@@ -58,8 +58,8 @@ fn response_to_bytes(response: &Response) -> BytesMut {
 
 fn build_response(request: &Request) -> Response {
     let error_code = match request.header.request_api_version {
-        0..=4 if request.header.request_api_key == 1 => 0,
-        0..=16 if request.header.request_api_key == 18 => 0,
+        0..=4 if request.header.request_api_key == 18 => 0,
+        0..=16 if request.header.request_api_key == 1 => 0,
         _ => 35,
     };
     let body = match request.header.request_api_key {
