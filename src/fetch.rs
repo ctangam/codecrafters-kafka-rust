@@ -231,7 +231,7 @@ impl Response {
     fn new(topic_id: u128) -> Self {
         Self {
             topic_id,
-            partitions: (1, vec![PartitionResp::new(0, 100)]),
+            partitions: (2, vec![PartitionResp::new(0, 100)]),
         }
     }
 }
