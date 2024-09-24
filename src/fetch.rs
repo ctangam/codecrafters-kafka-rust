@@ -240,6 +240,7 @@ impl Into<Vec<u8>> for &Response {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
         buffer.extend_from_slice(&self.topic_id.to_be_bytes());
+        buffer.put_u8(self.partitions.0);
         buffer.extend_from_slice(
             &self
                 .partitions
