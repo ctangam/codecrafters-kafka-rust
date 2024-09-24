@@ -63,7 +63,6 @@ fn build_response(request: &Request) -> Response {
     let body = match request.body {
         RequestBody::Fetch(ref fetch) => {
             let error_code = match request.header.request_api_version {
-                0..=16 if fetch.topics.0 > 0 => 100,
                 0..=16 => 0,
                 _ => 35,
             };

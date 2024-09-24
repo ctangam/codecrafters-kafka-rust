@@ -231,7 +231,7 @@ impl Response {
     fn new(topic_id: u128) -> Self {
         Self {
             topic_id,
-            partitions: (0, Vec::new()),
+            partitions: (1, vec![PartitionResp::new(0, 100)]),
         }
     }
 }
@@ -265,6 +265,22 @@ struct PartitionResp {
     preferred_read_replica: i32,
     records: (u8, Vec<u8>),
 }
+
+impl PartitionResp {
+    fn new(partition_index: i32, error_code: i16) -> Self {
+        Self {
+            partition_index,
+            error_code,
+            high_watermark: 0,
+            last_stable_offset: 0,
+            log_start_offset: 0,
+            aborted_transactions: (0, vec![]),
+            preferred_read_replica: 0,
+            records: (0, vec![]),
+        }
+    }
+}
+
 
 impl Into<Vec<u8>> for &PartitionResp {
     fn into(self) -> Vec<u8> {
