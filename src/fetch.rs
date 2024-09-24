@@ -291,6 +291,7 @@ impl Into<Vec<u8>> for &PartitionResp {
         buffer.extend_from_slice(&self.high_watermark.to_be_bytes());
         buffer.extend_from_slice(&self.last_stable_offset.to_be_bytes());
         buffer.extend_from_slice(&self.log_start_offset.to_be_bytes());
+        buffer.put_u8(self.aborted_transactions.0);
         buffer.extend_from_slice(
             &self
                 .aborted_transactions
@@ -301,6 +302,8 @@ impl Into<Vec<u8>> for &PartitionResp {
                 .concat(),
         );
         buffer.extend_from_slice(&self.preferred_read_replica.to_be_bytes());
+        buffer.put_u8(self.records.0);
+        buffer.extend_from_slice(&self.records.1);
         buffer.put_u8(0);
         buffer
     }
