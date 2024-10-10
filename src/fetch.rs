@@ -61,12 +61,12 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
             forgotten_topics_data.1.push(data);
         }
 
-        let mut rack_id = (buffer.get_u8(), String::from(""));
+        let mut rack_id = (buffer.get_u8(), String::new());
         println!("rack_id: {}", rack_id.0);
 
-        // rack_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize)).to_string();
+        rack_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize - 1)).to_string();
         
-        // buffer.get_u8();
+        buffer.get_u8();
 
         Self {
             max_wait_ms,
@@ -76,8 +76,8 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
             session_id,
             session_epoch,
             topics,
-            forgotten_topics_data: (0, Vec::new()),
-            rack_id: (0, String::from("")),
+            forgotten_topics_data,
+            rack_id,
         }
     }
 }

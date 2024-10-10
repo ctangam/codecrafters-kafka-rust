@@ -34,7 +34,7 @@ pub struct RequestHeader {
     pub request_api_key: i16,
     pub request_api_version: i16,
     pub correlation_id: i32,
-    client_id: (i16, Vec<u8>),
+    client_id: (i16, String),
     _tagged_fields: Option<Vec<i32>>,
 }
 
@@ -43,8 +43,8 @@ impl<T: Buf> Deserialize<T> for RequestHeader {
         let request_api_key = buffer.get_i16();
         let request_api_version = buffer.get_i16();
         let correlation_id = buffer.get_i32();
-        let mut client_id = (buffer.get_i16(), Vec::new());
-        client_id.1 = buffer.copy_to_bytes(client_id.0 as usize).to_vec();
+        let mut client_id = (buffer.get_i16(), String::new());
+        client_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(client_id.0 as usize - 1)).to_string();
         buffer.get_u8();
 
         RequestHeader {

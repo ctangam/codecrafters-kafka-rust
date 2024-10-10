@@ -12,8 +12,13 @@ impl ApiVersion {
         Self {
             error_code,
             api_keys: (
-                3,
+                4,
                 vec![
+                    ApiKey {
+                        api_key: 75,
+                        min_version: 0,
+                        max_version: 0,
+                    },
                     ApiKey {
                         api_key: 18,
                         min_version: 0,
