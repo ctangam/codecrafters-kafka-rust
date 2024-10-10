@@ -152,7 +152,7 @@ impl<T: Buf> Deserialize<T> for ForgottenTopicsData {
         let topic_id = buffer.get_u128();
         let mut partitions = (buffer.get_u8(), Vec::new());
 
-        for _ in 0..partitions.0 {
+        for _ in 0..partitions.0 - 1 {
             let partition = buffer.get_i32();
             partitions.1.push(partition);
         }
