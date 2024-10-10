@@ -1,6 +1,6 @@
 use bytes::BufMut;
 
-use crate::{api_version::ApiVersion, fetch::FetchResponse};
+use crate::{api_version::ApiVersion, describe::DescribeTopicPartitionsResponse, fetch::FetchResponse};
 
 #[derive(Debug)]
 pub struct Response {
@@ -34,6 +34,7 @@ impl Into<Vec<u8>> for &ResponseHeader {
 pub enum ResponseBody {
     ApiVersion(ApiVersion),
     Fetch(FetchResponse),
+    Describe(DescribeTopicPartitionsResponse),
 }
 
 impl Into<Vec<u8>> for &ResponseBody {
@@ -46,6 +47,10 @@ impl Into<Vec<u8>> for &ResponseBody {
             ResponseBody::Fetch(fetch_response) => {
                 buffer.put_u8(0);
                 buffer.extend_from_slice(&Into::<Vec<u8>>::into(fetch_response)[..]);
+            }
+            ResponseBody::Describe(describe) => {
+                buffer.put_u8(0);
+                buffer.extend_from_slice(&Into::<Vec<u8>>::into(describe)[..]);
             }
         }
         buffer

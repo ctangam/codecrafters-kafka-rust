@@ -5,23 +5,23 @@ use bytes::{Buf, BufMut, Bytes};
 use crate::deserialize::Deserialize;
 
 /*
-Fetch Request (Version: 16) => max_wait_ms min_bytes max_bytes isolation_level session_id session_epoch [topics] [forgotten_topics_data] rack_id TAG_BUFFER 
+Fetch Request (Version: 16) => max_wait_ms min_bytes max_bytes isolation_level session_id session_epoch [topics] [forgotten_topics_data] rack_id TAG_BUFFER
   max_wait_ms => INT32
   min_bytes => INT32
   max_bytes => INT32
   isolation_level => INT8
   session_id => INT32
   session_epoch => INT32
-  topics => topic_id [partitions] TAG_BUFFER 
+  topics => topic_id [partitions] TAG_BUFFER
     topic_id => UUID
-    partitions => partition current_leader_epoch fetch_offset last_fetched_epoch log_start_offset partition_max_bytes TAG_BUFFER 
+    partitions => partition current_leader_epoch fetch_offset last_fetched_epoch log_start_offset partition_max_bytes TAG_BUFFER
       partition => INT32
       current_leader_epoch => INT32
       fetch_offset => INT64
       last_fetched_epoch => INT32
       log_start_offset => INT64
       partition_max_bytes => INT32
-  forgotten_topics_data => topic_id [partitions] TAG_BUFFER 
+  forgotten_topics_data => topic_id [partitions] TAG_BUFFER
     topic_id => UUID
     partitions => INT32
   rack_id => COMPACT_STRING
@@ -48,7 +48,7 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         let session_id = buffer.get_i32();
         let session_epoch = buffer.get_i32();
         let mut topics = (buffer.get_u8(), Vec::new());
-        for _ in 0..topics.0-1 {
+        for _ in 0..topics.0 - 1 {
             let topic = Topic::from_bytes(buffer);
             println!("{:?}", topic);
             topics.1.push(topic);
@@ -56,7 +56,7 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
 
         let mut forgotten_topics_data = (buffer.get_u8(), Vec::new());
         println!("forgotten_topics_data: {}", forgotten_topics_data.0);
-        for _ in 0..forgotten_topics_data.0-1 {
+        for _ in 0..forgotten_topics_data.0 - 1 {
             let data = ForgottenTopicsData::from_bytes(buffer);
             forgotten_topics_data.1.push(data);
         }
@@ -64,8 +64,9 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         let mut rack_id = (buffer.get_u8(), String::new());
         println!("rack_id: {}", rack_id.0);
 
-        rack_id.1 = String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize - 1)).to_string();
-        
+        rack_id.1 =
+            String::from_utf8_lossy(&buffer.copy_to_bytes(rack_id.0 as usize - 1)).to_string();
+
         buffer.get_u8();
 
         Self {
@@ -94,7 +95,7 @@ impl<T: Buf> Deserialize<T> for Topic {
         println!("topic_id: {}", topic_id);
         let mut partitions = (buffer.get_u8(), Vec::new());
         println!("partitions: {}", partitions.0);
-        for _ in 0..partitions.0-1 {
+        for _ in 0..partitions.0 - 1 {
             let partition = PartitionReq::from_bytes(buffer);
             println!("{:?}", partition);
             partitions.1.push(partition);
@@ -137,7 +138,6 @@ impl<T: Buf> Deserialize<T> for PartitionReq {
             log_start_offset,
             partition_max_bytes,
         }
-
     }
 }
 
@@ -166,19 +166,19 @@ impl<T: Buf> Deserialize<T> for ForgottenTopicsData {
 }
 
 /*
-Fetch Response (Version: 16) => throttle_time_ms error_code session_id [responses] TAG_BUFFER 
+Fetch Response (Version: 16) => throttle_time_ms error_code session_id [responses] TAG_BUFFER
   throttle_time_ms => INT32
   error_code => INT16
   session_id => INT32
-  responses => topic_id [partitions] TAG_BUFFER 
+  responses => topic_id [partitions] TAG_BUFFER
     topic_id => UUID
-    partitions => partition_index error_code high_watermark last_stable_offset log_start_offset [aborted_transactions] preferred_read_replica records TAG_BUFFER 
+    partitions => partition_index error_code high_watermark last_stable_offset log_start_offset [aborted_transactions] preferred_read_replica records TAG_BUFFER
       partition_index => INT32
       error_code => INT16
       high_watermark => INT64
       last_stable_offset => INT64
       log_start_offset => INT64
-      aborted_transactions => producer_id first_offset TAG_BUFFER 
+      aborted_transactions => producer_id first_offset TAG_BUFFER
         producer_id => INT64
         first_offset => INT64
       preferred_read_replica => INT32
@@ -194,7 +194,12 @@ pub struct FetchResponse {
 
 impl FetchResponse {
     pub fn new(error_code: i16, request: &FetchRequest) -> Self {
-        let responses = request.topics.1.iter().map(|topic| Response::new(topic.topic_id)).collect();
+        let responses = request
+            .topics
+            .1
+            .iter()
+            .map(|topic| Response::new(topic.topic_id))
+            .collect();
         Self {
             throttle_time_ms: 0,
             error_code,
@@ -285,7 +290,6 @@ impl PartitionResp {
         }
     }
 }
-
 
 impl Into<Vec<u8>> for &PartitionResp {
     fn into(self) -> Vec<u8> {

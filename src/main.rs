@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use anyhow::{Error, Result};
 use api_version::{ApiKey, ApiVersion};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use describe::DescribeTopicPartitionsResponse;
 use deserialize::Deserialize;
 use fetch::FetchResponse;
 use pretty_hex::PrettyHex;
@@ -20,6 +21,7 @@ mod response;
 mod api_version;
 mod fetch;
 mod deserialize;
+mod describe;
 
 #[tokio::main]
 async fn main() {
@@ -75,6 +77,13 @@ fn build_response(request: &Request) -> Response {
             };
             ResponseBody::ApiVersion(ApiVersion::new(error_code))
         },
+        RequestBody::Describe(ref describe) => {
+            let error_code = match request.header.request_api_version {
+                0 => 0,
+                _ => 3,
+            };
+            ResponseBody::Describe(DescribeTopicPartitionsResponse::new(3, describe))
+        }
         _ => unimplemented!()
     };
     let response = Response {

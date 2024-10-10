@@ -2,7 +2,7 @@ use std::io::{Read, Write};
 
 use bytes::{Buf, Bytes};
 
-use crate::{deserialize::Deserialize, fetch::FetchRequest};
+use crate::{describe::DescribeTopicPartitionsRequest, deserialize::Deserialize, fetch::FetchRequest};
 
 #[derive(Debug)]
 pub struct Request {
@@ -61,4 +61,5 @@ impl<T: Buf> Deserialize<T> for RequestHeader {
 pub enum RequestBody {
     ApiVersion,
     Fetch(FetchRequest),
+    Describe(DescribeTopicPartitionsRequest),
 }
