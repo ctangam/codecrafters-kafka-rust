@@ -89,6 +89,7 @@ pub struct Topic {
 impl<T: Buf> Deserialize<T> for Topic {
     fn from_bytes(buffer: &mut T) -> Self {
         let topic_id = buffer.get_u128();
+        println!("topic_id: {}", topic_id);
         let mut partitions = (buffer.get_u8(), Vec::new());
         for _ in 0..partitions.0 {
             let partition = PartitionReq::from_bytes(buffer);
