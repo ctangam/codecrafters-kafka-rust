@@ -23,7 +23,7 @@ impl<T: Buf> Deserialize<T> for DescribeTopicPartitionsRequest {
             println!("{:?}", topic_name);
             topics.1.push(topic_name);
         }
-        buffer.get_u8();
+        // buffer.get_u8();
         let response_partition_limit = buffer.get_i32();
         let cursor = Cursor::from_bytes(buffer);
         buffer.get_u8();
