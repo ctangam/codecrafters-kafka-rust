@@ -13,7 +13,7 @@ impl<T: Buf> Deserialize<T> for DescribeTopicPartitionsRequest {
     fn from_bytes(buffer: &mut T) -> Self {
         let mut topics = (buffer.get_u8(), Vec::new());
         println!("topics: {}", topics.0);
-        for _ in 0..(topics.0 - 1) {
+        for _ in 0..1 {
             let len = buffer.get_u8();
             println!("topic_name: {}", len);
             let topic_name = (
