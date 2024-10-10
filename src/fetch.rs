@@ -199,7 +199,7 @@ impl FetchResponse {
             throttle_time_ms: 0,
             error_code,
             session_id: request.session_id,
-            responses: (request.topics.0 + 1, responses),
+            responses: (request.topics.0, responses),
         }
     }
 }
