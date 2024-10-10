@@ -9,14 +9,6 @@ pub struct DescribeTopicPartitionsRequest {
     cursor: Cursor,
 }
 
-#[test]
-fn test_range() {
-    let len = 2;
-    for _ in 0..len - 1 {
-        println!("...");
-    }
-}
-
 impl<T: Buf> Deserialize<T> for DescribeTopicPartitionsRequest {
     fn from_bytes(buffer: &mut T) -> Self {
         let mut topics = (buffer.get_u8(), Vec::new());
@@ -32,13 +24,13 @@ impl<T: Buf> Deserialize<T> for DescribeTopicPartitionsRequest {
             topics.1.push(topic_name);
         }
         buffer.get_u8();
-        // let response_partition_limit = buffer.get_i32();
+        let response_partition_limit = buffer.get_i32();
         let cursor = Cursor::from_bytes(buffer);
         buffer.get_u8();
 
         Self {
             topics,
-            response_partition_limit: 0,
+            response_partition_limit,
             cursor,
         }
     }
@@ -58,12 +50,12 @@ impl<T: Buf> Deserialize<T> for Cursor {
             len,
             String::from_utf8_lossy(&buffer.copy_to_bytes(len as usize - 1)).to_string(),
         );
-        let partition_index = buffer.get_i32();
+        // let partition_index = buffer.get_i32();
         buffer.get_u8();
 
         Self {
             topic_name,
-            partition_index,
+            partition_index: 0,
         }
     }
 }
