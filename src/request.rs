@@ -22,6 +22,10 @@ impl<T: Buf> Deserialize<T> for Request {
                 let body = RequestBody::ApiVersion;
                 Self { header, body }
             }
+            75 => {
+                let body = RequestBody::Describe(DescribeTopicPartitionsRequest::from_bytes(buffer));
+                Self { header, body }
+            }
             _ => todo!(),
         }
     }
