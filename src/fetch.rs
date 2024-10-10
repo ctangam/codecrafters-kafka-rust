@@ -50,6 +50,7 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         let mut topics = (buffer.get_u8(), Vec::new());
         for _ in 0..topics.0 {
             let topic = Topic::from_bytes(buffer);
+            println!("{:?}", topic);
             topics.1.push(topic);
         }
 
