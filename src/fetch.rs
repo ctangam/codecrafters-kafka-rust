@@ -48,7 +48,6 @@ impl<T: Buf> Deserialize<T> for FetchRequest {
         // let session_id = buffer.get_i32();
         // let session_epoch = buffer.get_i32();
         let mut topics = (buffer.get_u8(), Vec::new());
-        println!("topics: {}", topics.0);
         for _ in 0..topics.0 {
             let topic = Topic::from_bytes(buffer);
             topics.1.push(topic);
@@ -90,7 +89,6 @@ impl<T: Buf> Deserialize<T> for Topic {
     fn from_bytes(buffer: &mut T) -> Self {
         let topic_id = buffer.get_u128();
         let mut partitions = (buffer.get_u8(), Vec::new());
-        println!("partitions: {}", partitions.0);
         for _ in 0..partitions.0 {
             let partition = PartitionReq::from_bytes(buffer);
             partitions.1.push(partition);
