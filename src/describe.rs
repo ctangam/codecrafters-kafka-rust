@@ -157,9 +157,9 @@ impl Into<Vec<u8>> for &Topic {
             .1
             .iter()
             .for_each(|partition| buffer.extend_from_slice(&Into::<Vec<u8>>::into(partition)));
-        buffer.put_u8(0);
+        // buffer.put_u8(0);
         buffer.extend_from_slice(&self.topic_authorized_operations.to_be_bytes());
-        buffer.put_u8(0);
+        // buffer.put_u8(0);
         buffer
     }
 }
