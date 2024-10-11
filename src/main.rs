@@ -26,13 +26,7 @@ mod cluster_metadata;
 
 #[tokio::main]
 async fn main() {
-    let args = std::env::args().collect::<Vec<String>>();
-    if args.len() != 2 {
-        println!("usage: {} <path>", args[0]);
-        return;
-    }
-
-    let path = &args[1];
+    let path = "/tmp/kraft-combined-logs/__cluster_metadata-0/00000000000000000000.log";
     let content = std::fs::read(path).unwrap();
 
     println!("{:?}", content.hex_dump());
