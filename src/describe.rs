@@ -98,7 +98,7 @@ impl DescribeTopicPartitionsResponse {
     pub fn new(error_code: i16, request: &DescribeTopicPartitionsRequest) -> Self {
         let path = "/tmp/kraft-combined-logs/__cluster_metadata-0/00000000000000000000.log";
         let content = std::fs::read(path).unwrap();
-    
+        println!("{:?}", content);
         println!("{:?}", content.hex_dump());
         let metadata = cluster_metadata::ClusterMetadata::from_bytes(&mut &content[..]);
     
