@@ -34,6 +34,8 @@ async fn main() {
 
     let path = &args[1];
     let content = std::fs::read(path).unwrap();
+
+    println!("{:?}", content.hex_dump());
     let metadata = cluster_metadata::ClusterMetadata::from_bytes(&mut &content[..]);
 
     println!("{:?}", metadata);
