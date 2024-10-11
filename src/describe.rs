@@ -42,6 +42,15 @@ struct Cursor {
     pub partition_index: i32,
 }
 
+impl Cursor {
+    pub fn new(topic_name: String, partition_index: i32) -> Self {
+        Self {
+            topic_name: (topic_name.len() as u8 + 1, topic_name),
+            partition_index,
+        }
+    }
+}
+
 impl<T: Buf> Deserialize<T> for Cursor {
     fn from_bytes(buffer: &mut T) -> Self {
         let len = buffer.get_u8();
@@ -193,7 +202,6 @@ impl Into<Vec<u8>> for &Partition {
         self.offline_replicas.1.iter().for_each(|node| {
             buffer.extend_from_slice(&node.to_be_bytes());
         });
-        buffer.put_u8(0);
         buffer
     }
 }
