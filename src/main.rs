@@ -26,14 +26,6 @@ mod cluster_metadata;
 
 #[tokio::main]
 async fn main() {
-    let path = "/tmp/kraft-combined-logs/__cluster_metadata-0/00000000000000000000.log";
-    let content = std::fs::read(path).unwrap();
-
-    println!("{:?}", content.hex_dump());
-    let metadata = cluster_metadata::ClusterMetadata::from_bytes(&mut &content[..]);
-
-    println!("{:?}", metadata);
-
     let listener = TcpListener::bind("127.0.0.1:9092").await.unwrap();
 
     loop {
@@ -91,6 +83,7 @@ fn build_response(request: &Request) -> Response {
                 0 => 0,
                 _ => 3,
             };
+            
             ResponseBody::Describe(DescribeTopicPartitionsResponse::new(3, describe))
         }
         _ => unimplemented!()

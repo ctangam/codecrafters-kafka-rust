@@ -1,6 +1,7 @@
 use bytes::{Buf, BufMut};
+use pretty_hex::PrettyHex;
 
-use crate::deserialize::Deserialize;
+use crate::{cluster_metadata, deserialize::Deserialize};
 
 #[derive(Debug)]
 pub struct DescribeTopicPartitionsRequest {
@@ -95,6 +96,13 @@ pub struct DescribeTopicPartitionsResponse {
 
 impl DescribeTopicPartitionsResponse {
     pub fn new(error_code: i16, request: &DescribeTopicPartitionsRequest) -> Self {
+        let path = "/tmp/kraft-combined-logs/__cluster_metadata-0/00000000000000000000.log";
+        let content = std::fs::read(path).unwrap();
+    
+        println!("{:?}", content.hex_dump());
+        let metadata = cluster_metadata::ClusterMetadata::from_bytes(&mut &content[..]);
+    
+        println!("{:?}", metadata);
         let topics = (
             request.topics.0,
             request
