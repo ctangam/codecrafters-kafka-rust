@@ -132,9 +132,9 @@ impl<T: Buf> Deserialize<T> for Value {
         buf.set_position(pos);
         
         match r#type {
-            0 => Self::FeatureLevelRecord(FeatureLevelRecord::from_bytes(buf.get_mut())),
-            1 => Self::TopicRecord(TopicRecord::from_bytes(buf.get_mut())),
-            2 => Self::PartitionRecord(PartitionRecord::from_bytes(buf.get_mut())),
+            12 => Self::FeatureLevelRecord(FeatureLevelRecord::from_bytes(buf.get_mut())),
+            2 => Self::TopicRecord(TopicRecord::from_bytes(buf.get_mut())),
+            3 => Self::PartitionRecord(PartitionRecord::from_bytes(buf.get_mut())),
             _ => unimplemented!(),
         }
     }
