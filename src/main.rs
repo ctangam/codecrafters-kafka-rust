@@ -22,9 +22,22 @@ mod api_version;
 mod fetch;
 mod deserialize;
 mod describe;
+mod cluster_metadata;
 
 #[tokio::main]
 async fn main() {
+    let args = std::env::args().collect::<Vec<String>>();
+    if args.len() != 2 {
+        println!("usage: {} <path>", args[0]);
+        return;
+    }
+
+    let path = &args[1];
+    let content = std::fs::read(path).unwrap();
+    let metadata = cluster_metadata::ClusterMetadata::from_bytes(&mut &content[..]);
+
+    println!("{:?}", metadata);
+
     let listener = TcpListener::bind("127.0.0.1:9092").await.unwrap();
 
     loop {

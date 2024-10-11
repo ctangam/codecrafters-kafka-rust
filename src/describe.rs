@@ -23,7 +23,7 @@ impl<T: Buf> Deserialize<T> for DescribeTopicPartitionsRequest {
             println!("{:?}", topic_name);
             topics.1.push(topic_name);
         }
-        // buffer.get_u8();
+        buffer.get_u8();
         let response_partition_limit = buffer.get_i32();
         let cursor = Cursor::from_bytes(buffer);
         buffer.get_u8();
@@ -54,6 +54,9 @@ impl Cursor {
 impl<T: Buf> Deserialize<T> for Cursor {
     fn from_bytes(buffer: &mut T) -> Self {
         let len = buffer.get_u8();
+        if len == 255 {
+            return Cursor::new("".to_string(), 0);
+        }
         println!("cursor topic_name: {}", len);
         let topic_name = (
             len,
@@ -72,7 +75,11 @@ impl<T: Buf> Deserialize<T> for Cursor {
 impl Into<Vec<u8>> for &Cursor {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
-        buffer.extend_from_slice(&255u8.to_be_bytes());
+        if self.topic_name.1.is_empty() {
+            buffer.extend_from_slice(&255u8.to_be_bytes());
+            return buffer;
+        }
+        buffer.extend_from_slice(&self.topic_name.0.to_be_bytes());
         buffer.extend_from_slice(&self.topic_name.1.as_bytes());
         buffer.extend_from_slice(&self.partition_index.to_be_bytes());
         buffer
@@ -114,7 +121,6 @@ impl Into<Vec<u8>> for &DescribeTopicPartitionsResponse {
             .1
             .iter()
             .for_each(|topic| buffer.extend_from_slice(&Into::<Vec<u8>>::into(topic)));
-        buffer.put_u8(0);
         buffer.extend_from_slice(&Into::<Vec<u8>>::into(&self.next_cursor));
         buffer.put_u8(0);
         buffer
@@ -157,9 +163,8 @@ impl Into<Vec<u8>> for &Topic {
             .1
             .iter()
             .for_each(|partition| buffer.extend_from_slice(&Into::<Vec<u8>>::into(partition)));
-        // buffer.put_u8(0);
         buffer.extend_from_slice(&self.topic_authorized_operations.to_be_bytes());
-        // buffer.put_u8(0);
+        buffer.put_u8(0);
         buffer
     }
 }
@@ -204,6 +209,7 @@ impl Into<Vec<u8>> for &Partition {
         self.offline_replicas.1.iter().for_each(|node| {
             buffer.extend_from_slice(&node.to_be_bytes());
         });
+        buffer.put_u8(0);
         buffer
     }
 }
