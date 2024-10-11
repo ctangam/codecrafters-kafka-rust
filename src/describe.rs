@@ -72,7 +72,8 @@ impl<T: Buf> Deserialize<T> for Cursor {
 impl Into<Vec<u8>> for &Cursor {
     fn into(self) -> Vec<u8> {
         let mut buffer = Vec::new();
-        buffer.extend_from_slice(&self.topic_name.0.to_be_bytes());
+        let mut buf = unsigned_varint::encode::u8_buffer();
+        buffer.extend_from_slice(unsigned_varint::encode::u8(self.topic_name.0, &mut buf));
         buffer.extend_from_slice(&self.topic_name.1.as_bytes());
         buffer.extend_from_slice(&self.partition_index.to_be_bytes());
         buffer
