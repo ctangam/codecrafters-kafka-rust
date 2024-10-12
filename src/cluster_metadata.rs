@@ -129,13 +129,15 @@ enum Value {
 
 impl<T: Buf> Deserialize<T> for Value {
     fn from_bytes(buffer: &mut T) -> Self {
-        buffer.advance(1);
-        let r#type = buffer.get_u8();
-        println!("r#type: {}", r#type);
+        // buffer.advance(1);
+        // let r#type = buffer.get_u8();
+        // println!("r#type: {}", r#type);
         let mut buf = Cursor::new(buffer);
         let pos = buf.position();
+        println!("pos: {}", pos);
         buf.get_mut().advance(1);
         let r#type = buf.get_mut().get_u8();
+        println!("r#type: {}", r#type);
         buf.set_position(pos);
         
         match r#type {
