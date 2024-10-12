@@ -113,9 +113,9 @@ impl<T: Buf> Deserialize<T> for Record {
         println!("type: {}", r#type);
         let version = buffer.get_u8();
         let value = match r#type {
-            12 => Value::FeatureLevelRecord(FeatureLevelRecord::from_bytes(buffer)),
-            2 => Value::TopicRecord(TopicRecord::from_bytes(buffer)),
-            3 => Value::PartitionRecord(PartitionRecord::from_bytes(buffer)),
+            12 => Value::FeatureLevelRecord(FeatureLevelRecord::from_bytes(&mut buffer.copy_to_bytes(value_length as usize - 4))),
+            2 => Value::TopicRecord(TopicRecord::from_bytes(&mut buffer.copy_to_bytes(value_length as usize - 4))),
+            3 => Value::PartitionRecord(PartitionRecord::from_bytes(&mut buffer.copy_to_bytes(value_length as usize - 4))),
             _ => unimplemented!(),
         };
         println!("value: {:?}", value);
