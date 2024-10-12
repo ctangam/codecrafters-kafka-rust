@@ -108,18 +108,21 @@ impl<T: Buf> Deserialize<T> for Record {
         let key = if key_length != 1 { Some(buffer.get_u8()) } else { None };
         println!("key: {:?}", key);
         let value_length = buffer.get_i8();
+        println!("value_length: {}", value_length);
+        println!("remaining: {}", buffer.remaining());
         let frame_version = buffer.get_u8();
         let r#type = buffer.get_u8();
         println!("type: {}", r#type);
         let version = buffer.get_u8();
         let value = match r#type {
-            12 => Value::FeatureLevelRecord(FeatureLevelRecord::from_bytes(&mut buffer.copy_to_bytes(value_length as usize - 4))),
-            2 => Value::TopicRecord(TopicRecord::from_bytes(&mut buffer.copy_to_bytes(value_length as usize - 4))),
-            3 => Value::PartitionRecord(PartitionRecord::from_bytes(&mut buffer.copy_to_bytes(value_length as usize - 4))),
+            12 => Value::FeatureLevelRecord(FeatureLevelRecord::from_bytes(buffer)),
+            2 => Value::TopicRecord(TopicRecord::from_bytes(buffer)),
+            3 => Value::PartitionRecord(PartitionRecord::from_bytes(buffer)),
             _ => unimplemented!(),
         };
         println!("value: {:?}", value);
         let tagged_fields_count = buffer.get_u8();
+        println!("remaining: {}", buffer.remaining());
         let headers_array_count = buffer.get_u8();
 
         Self {
