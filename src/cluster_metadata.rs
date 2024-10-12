@@ -49,6 +49,7 @@ impl<T: Buf> Deserialize<T> for RecordBatch {
         let base_timestamp = buffer.get_u64();
         let max_timestamp = buffer.get_u64();
         let producer_id = buffer.get_i64();
+        println!("producer_id: {}", producer_id);
         let producer_epoch = buffer.get_i16();
         let base_sequence = buffer.get_i32();
         let records_length = buffer.get_u32();
