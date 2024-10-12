@@ -55,7 +55,7 @@ impl<T: Buf> Deserialize<T> for RecordBatch {
         let records_length = buffer.get_u32();
         println!("records_length: {}", records_length);
         let mut records = Vec::new();
-        for _ in 0..records_length - 1 {
+        for _ in 0..records_length {
             let record = Record::from_bytes(buffer);
             records.push(record);
         }
