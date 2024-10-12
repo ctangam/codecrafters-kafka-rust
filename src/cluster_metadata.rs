@@ -104,6 +104,7 @@ impl<T: Buf> Deserialize<T> for Record {
         println!("key: {:?}", key);
         let value_length = buffer.get_i8();
         let value = Value::from_bytes(buffer);
+        println!("value: {:?}", value);
         let headers_array_count = buffer.get_u8();
 
         Self {
@@ -146,6 +147,7 @@ impl<T: Buf> Deserialize<T> for Value {
             3 => Self::PartitionRecord(PartitionRecord::from_bytes(buf.get_mut())),
             _ => unimplemented!(),
         }
+
     }
 }
 
@@ -164,6 +166,7 @@ impl<T: Buf> Deserialize<T> for FeatureLevelRecord {
     fn from_bytes(buffer: &mut T) -> Self {
         let frame_version = buffer.get_u8();
         let r#type = buffer.get_u8();
+        println!("type: {}", r#type);
         let version = buffer.get_u8();
         let name_length = buffer.get_i8();
         let name = String::from_utf8_lossy(&buffer.copy_to_bytes(name_length as usize - 1)).to_string();
