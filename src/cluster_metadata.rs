@@ -12,6 +12,7 @@ impl<T: Buf> Deserialize<T> for ClusterMetadata {
         let mut record_batches = Vec::new();
         while buffer.has_remaining() {
             let batch = RecordBatch::from_bytes(buffer);
+            println!("{:?}", batch);
             record_batches.push(batch);
         }
 
@@ -179,6 +180,8 @@ impl<T: Buf> Deserialize<T> for TopicRecord {
         let name_length = buffer.get_i8();
         let topic_name = String::from_utf8_lossy(&buffer.copy_to_bytes(name_length as usize - 1)).to_string();
         let topic_uuid = buffer.get_u128();
+
+        println!("topic_uuid: {}", topic_uuid);
 
         Self {
             name_length,
