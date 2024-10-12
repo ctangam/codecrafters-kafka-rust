@@ -52,6 +52,7 @@ impl<T: Buf> Deserialize<T> for RecordBatch {
         let producer_epoch = buffer.get_i16();
         let base_sequence = buffer.get_i32();
         let records_length = buffer.get_u32();
+        println!("records_length: {}", records_length);
         let mut records = Vec::new();
         for _ in 0..records_length - 1 {
             let record = Record::from_bytes(buffer);
@@ -97,7 +98,9 @@ impl<T: Buf> Deserialize<T> for Record {
         let timestamp_delta = buffer.get_u8();
         let offset_delta = buffer.get_u8();
         let key_length = buffer.get_i8();
+        println!("key_length: {}", key_length);
         let key = if key_length != 1 { Some(buffer.get_u8()) } else { None };
+        println!("key: {:?}", key);
         let value_length = buffer.get_i8();
         let value = Value::from_bytes(buffer);
         let headers_array_count = buffer.get_u8();
