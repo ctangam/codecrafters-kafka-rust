@@ -88,7 +88,11 @@ struct Record {
     key_length: i8,
     key: Option<u8>,
     value_length: i8,
+    frame_version: u8,
+    r#type: u8,
+    version: u8,
     value: Value,
+    tagged_fields_count: u8,
     headers_array_count: u8,
 }
 
@@ -103,8 +107,18 @@ impl<T: Buf> Deserialize<T> for Record {
         let key = if key_length != 1 { Some(buffer.get_u8()) } else { None };
         println!("key: {:?}", key);
         let value_length = buffer.get_i8();
-        let value = Value::from_bytes(buffer);
+        let frame_version = buffer.get_u8();
+        let r#type = buffer.get_u8();
+        println!("type: {}", r#type);
+        let version = buffer.get_u8();
+        let value = match r#type {
+            12 => Value::FeatureLevelRecord(FeatureLevelRecord::from_bytes(buffer)),
+            2 => Value::TopicRecord(TopicRecord::from_bytes(buffer)),
+            3 => Value::PartitionRecord(PartitionRecord::from_bytes(buffer)),
+            _ => unimplemented!(),
+        };
         println!("value: {:?}", value);
+        let tagged_fields_count = buffer.get_u8();
         let headers_array_count = buffer.get_u8();
 
         Self {
@@ -115,7 +129,11 @@ impl<T: Buf> Deserialize<T> for Record {
             key_length,
             key,
             value_length,
+            frame_version,
+            r#type,
+            version,
             value,
+            tagged_fields_count,
             headers_array_count,
         }
     }
@@ -130,99 +148,55 @@ enum Value {
 
 impl<T: Buf> Deserialize<T> for Value {
     fn from_bytes(buffer: &mut T) -> Self {
-        // buffer.advance(1);
-        // let r#type = buffer.get_u8();
-        // println!("r#type: {}", r#type);
-        let mut buf = Cursor::new(buffer);
-        let pos = buf.position();
-        println!("pos: {}", pos);
-        buf.get_mut().advance(1);
-        let r#type = buf.get_mut().get_u8();
-        println!("r#type: {}", r#type);
-        buf.set_position(pos);
-        
-        match r#type {
-            12 => Self::FeatureLevelRecord(FeatureLevelRecord::from_bytes(buf.get_mut())),
-            2 => Self::TopicRecord(TopicRecord::from_bytes(buf.get_mut())),
-            3 => Self::PartitionRecord(PartitionRecord::from_bytes(buf.get_mut())),
-            _ => unimplemented!(),
-        }
+
 
     }
 }
 
 #[derive(Debug)]
 struct FeatureLevelRecord {
-    frame_version: u8,
-    r#type: u8,
-    version: u8,
     name_length: i8,
     name: String,
     feature_level: u16,
-    tagged_fields_count: u8,
 }
 
 impl<T: Buf> Deserialize<T> for FeatureLevelRecord {
     fn from_bytes(buffer: &mut T) -> Self {
-        let frame_version = buffer.get_u8();
-        let r#type = buffer.get_u8();
-        println!("type: {}", r#type);
-        let version = buffer.get_u8();
         let name_length = buffer.get_i8();
         let name = String::from_utf8_lossy(&buffer.copy_to_bytes(name_length as usize - 1)).to_string();
         let feature_level = buffer.get_u16();
-        let tagged_fields_count = buffer.get_u8();
 
         Self {
-            frame_version,
-            r#type,
-            version,
             name_length,
             name,
             feature_level,
-            tagged_fields_count,
         }
     }
 }
 
 #[derive(Debug)]
 struct TopicRecord {
-    frame_version: u8,
-    r#type: u8,
-    version: u8,
     name_length: i8,
     topic_name: String,
     topic_uuid: u128,
-    tagged_fields_count: u8,
 }
 
 impl<T: Buf> Deserialize<T> for TopicRecord {
     fn from_bytes(buffer: &mut T) -> Self {
-        let frame_version = buffer.get_u8();
-        let r#type = buffer.get_u8();
-        let version = buffer.get_u8();
         let name_length = buffer.get_i8();
         let topic_name = String::from_utf8_lossy(&buffer.copy_to_bytes(name_length as usize - 1)).to_string();
         let topic_uuid = buffer.get_u128();
-        let tagged_fields_count = buffer.get_u8();
 
         Self {
-            frame_version,
-            r#type,
-            version,
             name_length,
             topic_name,
             topic_uuid,
-            tagged_fields_count,
         }
     }
 }
 
 #[derive(Debug)]
 struct PartitionRecord {
-    frame_version: u8,
-    r#type: u8,
-    version: u8,
     partition_id: u32,
     topic_uuid: u128,
     length_of_replica_array: u8,
@@ -238,14 +212,10 @@ struct PartitionRecord {
     partiton_epoch: u32,
     length_of_directories_array: u8,
     directories_array: Vec<u128>,
-    tagged_fields_count: u8,
 }
 
 impl<T: Buf> Deserialize<T> for PartitionRecord {
     fn from_bytes(buffer: &mut T) -> Self {
-        let frame_version = buffer.get_u8();
-        let r#type = buffer.get_u8();
-        let version = buffer.get_u8();
         let partition_id = buffer.get_u32();
         let topic_uuid = buffer.get_u128();
         let length_of_replica_array = buffer.get_u8();
@@ -276,12 +246,8 @@ impl<T: Buf> Deserialize<T> for PartitionRecord {
         for _ in 0..length_of_directories_array - 1 {
             directories_array.push(buffer.get_u128());
         }
-        let tagged_fields_count = buffer.get_u8();
 
         Self {
-            frame_version,
-            r#type,
-            version,
             partition_id,
             topic_uuid,
             length_of_replica_array,
@@ -297,7 +263,6 @@ impl<T: Buf> Deserialize<T> for PartitionRecord {
             partiton_epoch,
             length_of_directories_array,
             directories_array,
-            tagged_fields_count,
         }
     }
 }
