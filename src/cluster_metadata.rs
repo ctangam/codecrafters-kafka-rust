@@ -146,13 +146,6 @@ enum Value {
     PartitionRecord(PartitionRecord),
 }
 
-impl<T: Buf> Deserialize<T> for Value {
-    fn from_bytes(buffer: &mut T) -> Self {
-
-
-    }
-}
-
 #[derive(Debug)]
 struct FeatureLevelRecord {
     name_length: i8,
