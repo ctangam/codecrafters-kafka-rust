@@ -100,6 +100,8 @@ struct Record {
 impl<T: Buf> Deserialize<T> for Record {
     fn from_bytes(buffer: &mut T) -> Self {
         let length = buffer.get_u8();
+        println!("length: {}", length);
+        println!("============== before record remaining: {}", buffer.remaining());
         let attributes = buffer.get_u8();
         let timestamp_delta = buffer.get_u8();
         let offset_delta = buffer.get_u8();
@@ -109,7 +111,7 @@ impl<T: Buf> Deserialize<T> for Record {
         println!("key: {:?}", key);
         let value_length = buffer.get_i8();
         println!("value_length: {}", value_length);
-        println!("remaining: {}", buffer.remaining());
+        println!("============== before value remaining: {}", buffer.remaining());
         let frame_version = buffer.get_u8();
         let r#type = buffer.get_u8();
         println!("type: {}", r#type);
@@ -122,8 +124,9 @@ impl<T: Buf> Deserialize<T> for Record {
         };
         println!("value: {:?}", value);
         let tagged_fields_count = buffer.get_u8();
-        println!("remaining: {}", buffer.remaining());
+        println!("============== after value remaining: {}", buffer.remaining());
         let headers_array_count = buffer.get_u8();
+        println!("============== after record remaining: {}", buffer.remaining());
 
         Self {
             length,
@@ -175,7 +178,7 @@ impl<T: Buf> Deserialize<T> for FeatureLevelRecord {
 struct TopicRecord {
     name_length: i8,
     topic_name: String,
-    topic_uuid: u128,
+    topic_uuid: uuid::Uuid,
 }
 
 impl<T: Buf> Deserialize<T> for TopicRecord {
@@ -183,6 +186,7 @@ impl<T: Buf> Deserialize<T> for TopicRecord {
         let name_length = buffer.get_i8();
         let topic_name = String::from_utf8_lossy(&buffer.copy_to_bytes(name_length as usize - 1)).to_string();
         let topic_uuid = buffer.get_u128();
+        let topic_uuid = uuid::Uuid::from_u128(topic_uuid);
 
         println!("topic_uuid: {}", topic_uuid);
 
@@ -197,7 +201,7 @@ impl<T: Buf> Deserialize<T> for TopicRecord {
 #[derive(Debug)]
 struct PartitionRecord {
     partition_id: u32,
-    topic_uuid: u128,
+    topic_uuid: uuid::Uuid,
     length_of_replica_array: u8,
     replica_array: Vec<u32>,
     length_of_isr_array: u8,
@@ -217,6 +221,8 @@ impl<T: Buf> Deserialize<T> for PartitionRecord {
     fn from_bytes(buffer: &mut T) -> Self {
         let partition_id = buffer.get_u32();
         let topic_uuid = buffer.get_u128();
+        let topic_uuid = uuid::Uuid::from_u128(topic_uuid);
+        println!("topic_uuid: {}", topic_uuid);
         let length_of_replica_array = buffer.get_u8();
         let mut replica_array = Vec::new();
         for _ in 0..length_of_replica_array - 1 {

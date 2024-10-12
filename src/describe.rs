@@ -93,14 +93,24 @@ pub struct DescribeTopicPartitionsResponse {
     topics: (u8, Vec<Topic>),
     next_cursor: Cursor,
 }
+#[test]
+fn test_describe() {
+    let a: Vec<u8> = vec![1, 2, 3];
+    for i in a.iter() {
+        print!("{:b}", i);
+    }
+}
 
 impl DescribeTopicPartitionsResponse {
     pub fn new(error_code: i16, request: &DescribeTopicPartitionsRequest) -> Self {
         let path = "/tmp/kraft-combined-logs/__cluster_metadata-0/00000000000000000000.log";
         let content = std::fs::read(path).unwrap();
+        for i in content.iter() {
+            print!("{:b}", i);
+        }
         println!("{:?}", content.hex_dump());
         let metadata = cluster_metadata::ClusterMetadata::from_bytes(&mut &content[..]);
-    
+
         println!("{:?}", metadata);
         let topics = (
             request.topics.0,
